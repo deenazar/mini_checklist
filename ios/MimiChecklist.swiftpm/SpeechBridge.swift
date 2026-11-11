@@ -1,0 +1,253 @@
+import Foundation
+import WebKit
+import Speech
+import AVFoundation
+
+/// Gives the checklist page speech recognition inside the app.
+///
+/// iPhone web views have no working speech recognition of their own, so this injects a small
+/// `SpeechRecognition` object into the page that hands listening to Apple's on-device speech
+/// recognizer and sends the words back. The page's mic button and “Hey Mimi” use it automatically.
+final class SpeechBridge: NSObject, WKScriptMessageHandler {
+    static let handlerName = "mimiSpeech"
+
+    /// Runs in every frame of the page (the checklist lives in a frame inside claude.ai).
+    static let pageScript = #"""
+    (function () {
+      var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.mimiSpeech;
+      if (!h) return;
+      var active = null, seq = 0;
+      function SR() {
+        this.lang = 'en-US'; this.continuous = false; this.interimResults = false; this.maxAlternatives = 1;
+        this.onresult = null; this.onerror = null; this.onend = null; this.onstart = null;
+        this._id = ++seq;
+      }
+      SR.prototype.start = function () {
+        if (active && active !== this) { var old = active; active = null; if (old.onend) try { old.onend({}); } catch (e) {} }
+        active = this;
+        h.postMessage({ cmd: 'start', id: this._id, lang: this.lang || 'en-US', continuous: !!this.continuous,
+                        interimResults: !!this.interimResults });
+      };
+      SR.prototype.stop = function () { h.postMessage({ cmd: 'stop', id: this._id }); };
+      SR.prototype.abort = SR.prototype.stop;
+      SR.prototype.addEventListener = function (type, fn) { this['on' + type] = fn; };
+      SR.prototype.removeEventListener = function (type) { this['on' + type] = null; };
+      window.__mimiSpeech = function (ev) {
+        var r = active;
+        if (!r || ev.id !== r._id) return;
+        try {
+          if (ev.type === 'start') { if (r.onstart) r.onstart({}); }
+          else if (ev.type === 'result') {
+            var alt = { transcript: ev.text, confidence: 1 };
+            var res = [alt]; res.isFinal = !!ev.isFinal; res.item = function (i) { return res[i]; };
+            var list = [res]; list.item = function (i) { return list[i]; };
+            if (r.onresult) r.onresult({ resultIndex: 0, results: list });
+          }
+          else if (ev.type === 'error') { if (r.onerror) r.onerror({ error: ev.error }); }
+          else if (ev.type === 'end') { active = null; if (r.onend) r.onend({}); }
+        } catch (e) {}
+      };
+      try {
+        Object.defineProperty(window, 'webkitSpeechRecognition', { value: SR, configurable: true, writable: true });
+        Object.defineProperty(window, 'SpeechRecognition', { value: SR, configurable: true, writable: true });
+      } catch (e) { window.webkitSpeechRecognition = SR; window.SpeechRecognition = SR; }
+    })();
+    """#
+
+    weak var webView: WKWebView?
+
+    private let engine = AVAudioEngine()
+    private var request: SFSpeechAudioBufferRecognitionRequest?
+    private var task: SFSpeechRecognitionTask?
+    private var recognizer: SFSpeechRecognizer?
+    private var frame: WKFrameInfo?
+    private var currentId = 0
+    private var silenceTimer: Timer?
+    private var lastText = ""
+    private var running = false
+    /// Waiting for the Microphone / Speech Recognition permission before listening.
+    private var starting = false
+    /// The page asked for in-progress text (`interimResults`), not only the final words.
+    private var wantsInterim = false
+
+    // MARK: Messages from the page
+
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard let body = message.body as? [String: Any], let cmd = body["cmd"] as? String else { return }
+        // Only Claude's own pages may use the microphone.
+        guard TrustedHosts.contains(message.frameInfo.securityOrigin) else { return }
+        let id = (body["id"] as? NSNumber)?.intValue ?? 0
+        switch cmd {
+        case "start":
+            if running { end(sendFinal: false) }
+            frame = message.frameInfo
+            currentId = id
+            starting = true
+            wantsInterim = (body["interimResults"] as? Bool) ?? false
+            let lang = (body["lang"] as? String) ?? "en-US"
+            authorize { [weak self] ok in
+                guard let self, self.currentId == id, self.starting else { return }
+                self.starting = false
+                if ok { self.begin(lang: lang) } else {
+                    self.send(["type": "error", "error": "not-allowed"])
+                    self.send(["type": "end"])
+                }
+            }
+        case "stop":
+            guard id == currentId else { break }
+            if running {
+                end(sendFinal: true)
+            } else if starting {
+                // Stopped while the permission question was still open: never start listening.
+                starting = false
+                send(["type": "end"])
+            }
+        default:
+            break
+        }
+    }
+
+    // MARK: Permissions
+
+    private func authorize(_ done: @escaping (Bool) -> Void) {
+        SFSpeechRecognizer.requestAuthorization { status in
+            guard status == .authorized else { DispatchQueue.main.async { done(false) }; return }
+            AVAudioApplication.requestRecordPermission { granted in
+                DispatchQueue.main.async { done(granted) }
+            }
+        }
+    }
+
+    // MARK: Listening
+
+    /// The recognizer for the page's language. Never falls back to another language:
+    /// Tamil speech run through an English recognizer only produces wrong words.
+    static func recognizer(for lang: String) -> SFSpeechRecognizer? {
+        let locale = Locale(identifier: lang.replacingOccurrences(of: "_", with: "-"))
+        if let exact = SFSpeechRecognizer(locale: locale) { return exact }
+        // "ta" or an unlisted region: use a supported locale of the same language, if there is one.
+        guard let code = locale.language.languageCode?.identifier else { return nil }
+        let sameLanguage = SFSpeechRecognizer.supportedLocales()
+            .filter { $0.language.languageCode?.identifier == code }
+            .sorted { $0.identifier < $1.identifier }
+        let preferred = sameLanguage.first { $0.region == locale.region } ?? sameLanguage.first
+        return preferred.flatMap { SFSpeechRecognizer(locale: $0) }
+    }
+
+    private func begin(lang: String) {
+        guard let rec = Self.recognizer(for: lang) else {
+            send(["type": "error", "error": "language-not-supported"])
+            send(["type": "end"])
+            return
+        }
+        guard rec.isAvailable else {
+            send(["type": "error", "error": "service-not-allowed"])
+            send(["type": "end"])
+            return
+        }
+        recognizer = rec
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord, mode: .measurement,
+                                    options: [.defaultToSpeaker, .duckOthers, .allowBluetooth])
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
+
+            let req = SFSpeechAudioBufferRecognitionRequest()
+            req.shouldReportPartialResults = true
+            req.addsPunctuation = true
+            request = req
+
+            let input = engine.inputNode
+            let format = input.outputFormat(forBus: 0)
+            input.removeTap(onBus: 0)
+            input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+                self?.request?.append(buffer)
+            }
+            engine.prepare()
+            try engine.start()
+
+            running = true
+            lastText = ""
+            send(["type": "start"])
+
+            task = rec.recognitionTask(with: req) { [weak self] result, error in
+                DispatchQueue.main.async {
+                    guard let self, self.running else { return }
+                    if let result {
+                        let text = result.bestTranscription.formattedString
+                        if result.isFinal { self.lastText = text; self.end(sendFinal: true); return }
+                        if text != self.lastText {
+                            self.lastText = text
+                            if self.wantsInterim {
+                                self.send(["type": "result", "text": text, "isFinal": false])
+                            }
+                            self.armSilence(seconds: 1.4)
+                        }
+                    } else if error != nil {
+                        self.end(sendFinal: true)
+                    }
+                }
+            }
+            armSilence(seconds: 12) // stop if nobody speaks
+        } catch {
+            cleanUp()
+            send(["type": "error", "error": "audio-capture"])
+            send(["type": "end"])
+        }
+    }
+
+    /// When the speaker pauses, treat what was heard as final.
+    private func armSilence(seconds: TimeInterval) {
+        silenceTimer?.invalidate()
+        silenceTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: false) { [weak self] _ in
+            guard let self, self.running else { return }
+            self.end(sendFinal: true)
+        }
+    }
+
+    private func end(sendFinal: Bool) {
+        guard running else { return }
+        running = false
+        let text = lastText.trimmingCharacters(in: .whitespacesAndNewlines)
+        cleanUp()
+        if sendFinal && !text.isEmpty {
+            send(["type": "result", "text": text, "isFinal": true])
+        }
+        send(["type": "end"])
+    }
+
+    private func cleanUp() {
+        silenceTimer?.invalidate()
+        silenceTimer = nil
+        if engine.isRunning { engine.stop() }
+        engine.inputNode.removeTap(onBus: 0)
+        request?.endAudio()
+        request = nil
+        task?.cancel()
+        task = nil
+        // Back to normal playback so Mimi’s voice is loud and clear, then let go of the audio
+        // so music in other apps comes back to full volume. Mimi's voice reactivates it when she speaks.
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playback, mode: .spokenAudio, options: [])
+        try? session.setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    func shutDown() {
+        starting = false
+        if running { running = false; cleanUp() }
+    }
+
+    // MARK: Messages to the page
+
+    private func send(_ payload: [String: Any]) {
+        guard let webView else { return }
+        var body = payload
+        body["id"] = currentId
+        guard let data = try? JSONSerialization.data(withJSONObject: body),
+              let json = String(data: data, encoding: .utf8) else { return }
+        let js = "window.__mimiSpeech && window.__mimiSpeech(\(json));"
+        DispatchQueue.main.async {
+            webView.evaluateJavaScript(js, in: self.frame, in: .page) { _ in }
+        }
+    }
+}
