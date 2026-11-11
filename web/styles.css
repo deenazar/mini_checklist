@@ -65,6 +65,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   pointer-events:auto;will-change:transform;line-height:1.05}
 .plab b{font:500 11px var(--mono);font-variant-numeric:tabular-nums}
 .plab span{font:600 9.5px var(--body);letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.plab{transition:opacity .2s}
+.plab.under{opacity:0;pointer-events:none!important}
 .plab.sel span{background:#fff;color:#10202A;border-radius:6px;padding:1px 5px;text-shadow:none;opacity:1}
 .bubble{position:absolute;left:0;top:0;z-index:4;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis;background:#fff;color:#10202A;
   font:600 12px var(--body);padding:6px 11px;border-radius:14px 14px 14px 3px;box-shadow:0 8px 22px -8px rgba(0,0,0,.4);opacity:0;pointer-events:none;

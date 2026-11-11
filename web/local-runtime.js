@@ -1,15 +1,22 @@
 /*
- * Local stand-in for the claude.ai artifact runtime, so Mimi Checklist runs in any browser.
+ * Local stand-in for the claude.ai artifact runtime, so Mimi Checklist runs in any browser
+ * and inside the iPhone app.
  *
  * The app asks for services with `claude.use(name)`:
- *   - 'db'    a small document store (docs and collections, live onSnapshot), kept in localStorage
- *   - 'user'  a stable local user id for this browser
+ *   - 'db'    a small document store (docs and collections, live onSnapshot), kept on this device
+ *   - 'user'  a stable local user id for this device
  *   - 'tts', 'dictation', 'sample'  resolve to null, so the app uses its own fallbacks:
  *     the browser's speech synthesis, SpeechRecognition (or the iPhone app's bridge),
  *     and Mimi's built-in local replies.
  *
- * Data stays in this browser only. Back it up from the console with `mimiLocal.exportData()`
- * and restore it with `mimiLocal.importData(json)`.
+ * Where data is kept:
+ *   - in a browser: localStorage, for this browser only;
+ *   - in the iPhone app: a file inside the app. Each time the page loads it asks the app for the saved
+ *     data (`mimiStore` handler, cmd 'load'), then sends every change back (cmd 'set' / 'remove').
+ *     iOS can clear a web view's localStorage, but not the app's own files. If loading fails,
+ *     the database is not offered at all, so nothing can overwrite the saved data.
+ *
+ * Backups: Settings › Backup, or `mimiLocal.exportData()` / `mimiLocal.importData(json)` (both return Promises).
  */
 (function () {
   'use strict';
@@ -31,28 +38,70 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
   }
 
+  /* ---------- Storage backend ---------- */
+  var nativeHandler = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.mimiStore;
+  var store, ready, loadFailed = false;
+  if (nativeHandler) {
+    // iPhone app: keep everything in memory and send each change to the app, which saves it to a file.
+    var mem = Object.create(null);
+    store = {
+      kind: 'app',
+      get: function (k) { return k in mem ? mem[k] : null; },
+      set: function (k, v) {
+        if (loadFailed) throw fail('unavailable', 'Saved data could not be loaded.');
+        mem[k] = String(v);
+        nativeHandler.postMessage({ cmd: 'set', key: k, value: String(v) });
+      },
+      remove: function (k) {
+        if (loadFailed || !(k in mem)) return;
+        delete mem[k];
+        nativeHandler.postMessage({ cmd: 'remove', key: k });
+      },
+      keys: function () { return Object.keys(mem); }
+    };
+    ready = Promise.resolve()
+      .then(function () { return nativeHandler.postMessage({ cmd: 'load' }); })
+      .then(function (json) {
+        var data = typeof json === 'string' ? JSON.parse(json) : json;
+        if (!data || typeof data !== 'object') throw new Error('No saved data was returned.');
+        Object.keys(data).forEach(function (k) { if (typeof data[k] === 'string') mem[k] = data[k]; });
+      })
+      .catch(function (e) { loadFailed = true; console.error('Mimi: saved data could not be loaded', e); });
+  } else {
+    store = {
+      kind: 'browser',
+      get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+      set: function (k, v) { localStorage.setItem(k, v); },
+      remove: function (k) { try { localStorage.removeItem(k); } catch (e) {} },
+      keys: function () {
+        var out = [];
+        try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k != null) out.push(k); } } catch (e) {}
+        return out;
+      }
+    };
+    ready = Promise.resolve();
+  }
+
   function readDoc(path) {
-    try { var s = localStorage.getItem(DOC_PREFIX + path); return s == null ? null : JSON.parse(s); }
+    try { var s = store.get(DOC_PREFIX + path); return s == null ? null : JSON.parse(s); }
     catch (e) { return null; }
   }
   function writeDoc(path, value) {
     var s = JSON.stringify(value);
     if (s.length > MAX_DOC_CHARS) throw fail('too_large', 'This item is too large to save.');
-    try { localStorage.setItem(DOC_PREFIX + path, s); }
-    catch (e) { throw fail('quota_exceeded', 'Browser storage is full.'); }
+    try { store.set(DOC_PREFIX + path, s); }
+    catch (e) { throw e && e.code ? e : fail('quota_exceeded', 'Storage is full.'); }
     notify(path);
   }
   function removeDoc(path) {
-    try { localStorage.removeItem(DOC_PREFIX + path); } catch (e) {}
+    store.remove(DOC_PREFIX + path);
     notify(path);
   }
   function docPathsIn(collection) {
-    var pre = DOC_PREFIX + collection + '/', out = [];
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.indexOf(pre) === 0 && k.slice(pre.length).indexOf('/') < 0) out.push(k.slice(DOC_PREFIX.length));
-    }
-    return out;
+    var pre = DOC_PREFIX + collection + '/';
+    return store.keys().filter(function (k) {
+      return k.indexOf(pre) === 0 && k.slice(pre.length).indexOf('/') < 0;
+    }).map(function (k) { return k.slice(DOC_PREFIX.length); });
   }
 
   /* ---------- Live listeners ---------- */
@@ -64,6 +113,7 @@
   }
   // Changes made in another tab of the same browser.
   window.addEventListener('storage', function (e) {
+    if (store.kind !== 'browser') return;
     if (e.key && e.key.indexOf(DOC_PREFIX) === 0) notify(e.key.slice(DOC_PREFIX.length));
     else if (e.key === null) listeners.forEach(function (l) { l.schedule(); }); // storage cleared
   });
@@ -111,8 +161,7 @@
         return later(function () {
           var cur = readDoc(path);
           if (cur == null) throw fail('not_found', 'Nothing to update at ' + path);
-          var next = Object.assign({}, cur, copy(fields));
-          writeDoc(path, next);
+          writeDoc(path, Object.assign({}, cur, copy(fields)));
         });
       },
       delete: function () { return later(function () { removeDoc(path); }); },
@@ -125,16 +174,16 @@
         return later(function () {
           var holder = (opts && opts.holder) || newId(), ttl = (opts && opts.ttlMs) || 15000, now = Date.now(), key = LOCK_PREFIX + path;
           var cur = null;
-          try { cur = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {}
+          try { cur = JSON.parse(store.get(key) || 'null'); } catch (e) {}
           if (cur && cur.until > now && cur.holder !== holder) return { acquired: false, holder: cur.holder };
-          try { localStorage.setItem(key, JSON.stringify({ holder: holder, until: now + ttl })); } catch (e) {}
+          try { store.set(key, JSON.stringify({ holder: holder, until: now + ttl })); } catch (e) {}
           return {
             acquired: true, holder: holder,
             release: function () {
               return later(function () {
                 try {
-                  var c = JSON.parse(localStorage.getItem(key) || 'null');
-                  if (c && c.holder === holder) localStorage.removeItem(key);
+                  var c = JSON.parse(store.get(key) || 'null');
+                  if (c && c.holder === holder) store.remove(key);
                 } catch (e) {}
               });
             }
@@ -184,18 +233,14 @@
     };
   }
 
-  var db = {
-    doc: docRef,
-    collection: collectionRef
-  };
+  var db = { doc: docRef, collection: collectionRef };
 
   /* ---------- User ---------- */
   function localUserId() {
-    var id = null;
-    try { id = localStorage.getItem(USER_KEY); } catch (e) {}
+    var id = store.get(USER_KEY);
     if (!id) {
       id = 'local-' + newId();
-      try { localStorage.setItem(USER_KEY, id); } catch (e) {}
+      try { store.set(USER_KEY, id); } catch (e) {}
     }
     return id;
   }
@@ -207,28 +252,44 @@
   window.claude = {
     local: true,
     use: function (name) {
-      if (name === 'db') return Promise.resolve(db);
-      if (name === 'user') return Promise.resolve(user);
+      if (name === 'db') return ready.then(function () { return loadFailed ? null : db; });
+      if (name === 'user') return ready.then(function () { return loadFailed ? null : user; });
       return Promise.resolve(null); // tts, dictation, sample: the app falls back on its own
     }
   };
 
-  /* ---------- Backup helpers (run in the browser console) ---------- */
+  /* ---------- Backups (Settings › Backup, or the console) ---------- */
+  function isBackup(data) { return !!(data && data.app === 'mimi-checklist' && data.docs && typeof data.docs === 'object'); }
+
+  function exportNow() {
+    if (loadFailed) throw fail('unavailable', 'Saved data could not be loaded.');
+    var out = {};
+    store.keys().forEach(function (k) {
+      if (k.indexOf(DOC_PREFIX) === 0) out[k.slice(DOC_PREFIX.length)] = readDoc(k.slice(DOC_PREFIX.length));
+    });
+    return JSON.stringify({ app: 'mimi-checklist', version: 1, exportedAt: new Date().toISOString(), user: localUserId(), docs: out });
+  }
+
+  function importNow(json) {
+    if (loadFailed) throw fail('unavailable', 'Saved data could not be loaded.');
+    var data = typeof json === 'string' ? JSON.parse(json) : json;
+    if (!isBackup(data)) throw new Error('This file isn’t a Mimi Checklist backup.');
+    var paths = Object.keys(data.docs).filter(function (p) {
+      var c = clean(p);
+      return c && c === p && c.split('/').length % 2 === 0 && data.docs[p] && typeof data.docs[p] === 'object';
+    });
+    // Private items (notes, profile, vault) live under the user id, so take over the backup's id.
+    if (typeof data.user === 'string' && /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(data.user)) store.set(USER_KEY, data.user);
+    paths.forEach(function (p) { writeDoc(p, copy(data.docs[p])); });
+    return paths.length;
+  }
+
   window.mimiLocal = {
-    exportData: function () {
-      var out = {};
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k && k.indexOf(DOC_PREFIX) === 0) out[k.slice(DOC_PREFIX.length)] = readDoc(k.slice(DOC_PREFIX.length));
-      }
-      return JSON.stringify({ app: 'mimi-checklist', version: 1, user: localUserId(), docs: out });
-    },
-    importData: function (json) {
-      var data = typeof json === 'string' ? JSON.parse(json) : json;
-      if (!data || data.app !== 'mimi-checklist' || !data.docs) throw new Error('Not a Mimi Checklist backup.');
-      if (data.user) { try { localStorage.setItem(USER_KEY, data.user); } catch (e) {} }
-      Object.keys(data.docs).forEach(function (p) { writeDoc(clean(p), data.docs[p]); });
-      return Object.keys(data.docs).length + ' items restored. Reload the page to see them all.';
-    }
+    storage: store.kind, // 'browser' or 'app'
+    /** Resolves to the backup as a JSON string. */
+    exportData: function () { return ready.then(exportNow); },
+    /** Adds the backup's items, replacing items with the same path. Resolves to how many were restored. */
+    importData: function (json) { return ready.then(function () { return importNow(json); }); },
+    isBackup: isBackup
   };
 })();

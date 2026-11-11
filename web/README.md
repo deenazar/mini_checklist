@@ -11,7 +11,12 @@ It is the same app as the claude.ai artifact the iPhone app opens, split into no
 | `styles.css` | All styles (light and dark themes) |
 | `app.js` | The app: tasks, timers, reminders, water, notes, lists, vault, Mimi and her 3D island |
 | `local-runtime.js` | Stands in for claude.ai's services so the app runs anywhere (see below) |
+| `backup-ui.js` | Settings › Backup: export a backup file, restore one |
+| `vendor/` | three.js r128 and the fonts, bundled so the app works offline (licences included) |
 | `icon.png` | App icon (same as the iPhone app) |
+
+The iPhone app (`ios/`) bundles a copy of this folder. After changing anything here, run
+`scripts/sync-ios-web.sh`.
 
 ## Run it
 
@@ -33,7 +38,8 @@ On claude.ai the app saves to Claude's artifact storage. Here, `local-runtime.js
 `claude.use(...)` services locally:
 
 - **Database:** tasks, daily tasks, lists, water, notes, profile and the vault are saved in this
-  browser's `localStorage`. Changes show up live in other tabs of the same browser.
+  browser's `localStorage` (in the iPhone app: in a file inside the app). Changes show up live in other tabs
+  of the same browser.
 - **Your account:** a private local id is created for this browser.
 - **Mimi's voice, listening and chat:** the app uses the browser's own speech synthesis and speech
   recognition (Chrome, Edge and Safari support listening) and Mimi's built-in replies.
@@ -41,15 +47,13 @@ On claude.ai the app saves to Claude's artifact storage. Here, `local-runtime.js
 Things to know:
 
 - Data stays **in this browser only**. It does not sync between devices, and clearing site data deletes it.
-- **Back up** from the browser console (F12 → Console):
-  `copy(mimiLocal.exportData())` copies a backup to the clipboard.
-  Restore it with `mimiLocal.importData('<paste the backup here>')`, then reload.
+- **Back up and restore** in Settings › Backup. The same file works in the browser and the iPhone app, and
+  restoring the backup made from the old claude.ai checklist brings all of that data in.
 - Browser storage holds about 5 MB, so keep profile photos small.
-- A few labels still mention Claude (for example “Signed in with your Claude account” in Profile, and
-  “sync everywhere” in Settings). They come from the claude.ai version of the page.
 
-## Updating from the artifact
+## Where the code came from
 
-`app.js`, `styles.css` and the markup in `index.html` are copied unchanged from the claude.ai artifact
-(the iPhone app's page). To bring in a newer artifact version, copy its `<script>`, `<style>` and body markup
-into these files again. Keep `local-runtime.js` loading before `app.js` in `index.html`.
+`app.js`, `styles.css` and the markup in `index.html` came from the claude.ai artifact
+with a few fixes since: the island's day labels no longer cover the date on phones, speech errors such as an
+unsupported language now show a message, and wording that referred to claude.ai was updated.
+Keep `local-runtime.js` loading before `app.js`, and `backup-ui.js` after it, in `index.html`.

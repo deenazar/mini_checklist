@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F5F8F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D161B" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mimi">
+<title>Daily Checklist</title>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <section class="stage" id="stage" aria-label="Your week on Mimi's island">
+    <div class="fb" id="fb" aria-hidden="true"></div>
+    <div class="di" id="di" role="button" tabindex="0" aria-label="Mimi’s live status. Tap to expand.">
+      <div class="c"><span class="lt" id="diL"></span><span class="rt" id="diR"></span></div>
+      <div class="n" id="diN"><span class="av" id="diNav"></span><span class="ntx"><b id="diNt"></b><span id="diNs"></span></span></div>
+      <div class="x" id="diX"></div>
+    </div>
+    <div class="plabs" id="plabs"></div>
+    <span class="bubble" id="bubble" aria-live="polite"></span>
+    <div class="hud top">
+      <div class="date"><span class="num" id="dNum">–</span><span class="rest"><span class="wd" id="dWd">Loading</span><span class="mo" id="dMo"></span></span></div>
+      <div class="btns">
+        <button class="g" id="todayBtn" type="button" hidden>Today</button>
+        <button class="g" id="notesBtn" type="button" aria-label="Notes"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">Notes</span></button>
+        <button class="g" id="waterBtn" type="button" aria-pressed="true" aria-label="Hide water tracker"><svg viewBox="0 0 24 24"><path d="M12 2.5C9 6.5 5.5 10.6 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10.6 15 6.5 12 2.5z"/></svg><span class="lbl">Water</span></button>
+        <button class="g" id="metricBtn" type="button" aria-label="Show focus time"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span class="lbl" id="metricLbl">Focus</span></button>
+        <button class="g" id="setBtn" type="button" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="lbl">Settings</span></button>
+        <button class="av" id="avBtn" type="button" aria-label="Your profile"><img id="avImg" alt="" hidden><span id="avIni" aria-hidden="true">·</span></button>
+        <button class="g" id="dailyBtn" hidden type="button" aria-label="Daily tasks"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg><span class="lbl">Daily</span></button>
+        <button class="g" id="voiceBtn" hidden type="button" aria-pressed="true" aria-label="Mimi’s voice"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg><span class="lbl" id="voiceLbl">Voice</span></button>
+        <button class="g" id="sound" hidden type="button" aria-label="Sound"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/><path id="wave" d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button>
+      </div>
+    </div>
+    <div class="hud bot">
+      <div class="chips">
+        <div class="chip"><b id="stAvg">–</b><span>7-day avg</span></div>
+        <div class="chip"><b id="stStreak">–</b><span>Streak</span></div>
+        <div class="chip"><b id="stFocus">–</b><span id="stFocusLbl">Focus</span></div>
+      </div>
+      <div class="wk"><button class="g" id="wPrev" type="button" aria-label="Previous week">‹</button><button class="g" id="wNext" type="button" aria-label="Next week">›</button></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="pin">
+      <div class="handle"></div>
+      <div class="days" id="days" role="tablist" aria-label="Pick a day"></div>
+      <div class="wstrip" id="wstrip" role="button" tabindex="0" aria-label="Water intake. Open water tracker.">
+        <span class="wdrop" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.5C9 6.5 5.5 10.6 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10.6 15 6.5 12 2.5z"/></svg></span>
+        <span class="wmid"><span class="wtop">Water<span id="wTxt">–</span></span><span class="wbar"><i id="wMeter"></i></span></span>
+        <button class="wq" id="wQuick" type="button"><svg viewBox="0 0 12 12"><path d="M5 1h2v4h4v2H7v4H5V7H1V5h4z"/></svg><span id="wQuickLbl">250 ml</span></button>
+      </div>
+      <form class="add" id="addForm" autocomplete="off">
+        <input id="newTask" type="text" maxlength="200" placeholder="Add a task for Mimi to track" aria-label="New task">
+        <div class="arow">
+          <label class="sel" for="newCat"><span class="cdot" id="newCatDot"></span><select id="newCat" aria-label="List"></select></label>
+          <label class="sel psel" for="newPri"><span class="cdot" id="newPriDot"></span><b id="newPriLbl">P2</b><select id="newPri" aria-label="Priority"></select></label>
+          <label class="sel" for="newMin"><span class="t">Time</span>
+            <select id="newMin" aria-label="Planned time">
+              <option value="0">None</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option>
+              <option value="20">20 min</option><option value="25" selected>25 min</option><option value="30">30 min</option><option value="45">45 min</option>
+              <option value="60">1 hr</option><option value="90">1.5 hr</option><option value="120">2 hr</option><option value="180">3 hr</option><option value="240">4 hr</option>
+            </select>
+          </label>
+          <button class="bell" id="remBtn" type="button" aria-expanded="false" aria-label="Add a reminder"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span id="remLbl"></span></button>
+          <button class="switch" id="dailyToggle" type="button" role="switch" aria-checked="false" aria-label="Repeat daily"><span class="sw"></span><span class="lbl">Daily</span></button>
+          <button class="addbtn" type="submit" id="addBtn"><b>+</b><span>Add</span></button>
+        </div>
+        <div class="remrow" id="remRow" hidden>
+          <span>Remind at</span><input type="time" id="newAt" aria-label="Reminder time">
+          <label class="sel" for="newBefore"><select id="newBefore" aria-label="When to notify"></select></label>
+          <button class="linkbtn" type="button" id="remClear">Clear</button>
+        </div>
+        <div class="err" id="addErr" role="alert"></div>
+      </form>
+      <div class="lhead"><h2 id="listTitle">Today</h2><div class="bar"><i id="meter"></i></div><span id="remain">0/0</span><button class="ins icon" id="vaultBtn" type="button" aria-label="Password vault"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button><button class="ins" id="insBtn" type="button"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Insights</button></div>
+      <div class="alloc" id="alloc"></div>
+      <div class="filters" id="filters" aria-label="Filter by list"></div>
+      <div class="scroll" id="scroll"><div class="tasks" id="list"></div><div id="spacer" aria-hidden="true"></div></div>
+    </div>
+  </section>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" aria-label="Daily tasks" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3>Daily tasks</h3><button class="sbtn" id="sheetClose" type="button">Done</button></div>
+  <p>These are added to your list every morning. Unfinished one-off tasks move to the next day on their own.</p>
+  <div class="rlist" id="routines"></div>
+</section>
+<section class="sheet isheet" id="isheet" aria-label="Task insights" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3>Insights</h3><button class="sbtn" id="iClose" type="button">Done</button></div>
+  <div class="seg3" role="tablist"><button type="button" role="tab" data-r="day" aria-selected="true">Day</button><button type="button" role="tab" data-r="week" aria-selected="false">Week</button><button type="button" role="tab" data-r="month" aria-selected="false">Month</button></div>
+  <div class="ibody" id="ibody"></div>
+</section>
+<section class="sheet esheet" id="esheet" aria-label="Edit task" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3>Edit task</h3><button class="sbtn" id="eClose" type="button">Cancel</button></div>
+  <form id="editForm" autocomplete="off">
+    <label class="fld">Task<input id="eText" type="text" maxlength="200"></label>
+    <div class="fld">Priority<div class="catpick" id="ePris" role="radiogroup" aria-label="Priority"></div></div>
+    <div class="fld">List<div class="catpick" id="eCats" role="radiogroup" aria-label="List"></div></div>
+    <div class="fld">Planned time<div class="frow"><label class="sel" for="eMin"><select id="eMin" aria-label="Planned time"></select></label></div></div>
+    <div class="fld">Reminder (optional)<div class="frow"><input type="time" id="eAt" aria-label="Reminder time"><label class="sel" for="eBefore"><select id="eBefore" aria-label="When to notify"></select></label><button class="linkbtn" type="button" id="eClear">Clear</button></div></div>
+    <div class="fld">Day<div class="frow"><input type="date" id="eDate" aria-label="Move to day" style="border:0;background:var(--fill);border-radius:10px;height:34px;padding:0 10px;font:500 13px var(--mono);color:var(--ink)"><button class="linkbtn" type="button" id="eTom">Tomorrow</button><button class="linkbtn" type="button" id="eNextWk">Next week</button></div></div>
+    <div class="err" id="eErr" role="alert"></div>
+    <div class="ebtns"><button class="del" type="button" id="eDel">Delete</button><button class="save" type="submit">Save</button></div>
+  </form>
+</section>
+<section class="sheet wsheet" id="wsheet" aria-label="Water tracker" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3 id="wTitle">Water</h3><button class="sbtn" id="wClose" type="button">Done</button></div>
+  <div class="wbody">
+    <div class="whero"><div class="wring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="43"/><circle class="f" id="wRingF" cx="50" cy="50" r="43" stroke-dasharray="270.2" stroke-dashoffset="270.2"/></svg><b id="wPct">0%</b></div>
+      <div class="wtx"><strong id="wAmt">0 ml</strong><span id="wGoalTx">of 2,500 ml goal</span><span id="wLeft"></span></div></div>
+    <div class="wcups" id="wCups"></div>
+    <form class="wcustom" id="wCustom" autocomplete="off"><label class="wnum"><input id="wIn" type="number" inputmode="decimal" min="0" step="any" placeholder="Other amount" aria-label="Amount you drank"><span class="wu">ml</span></label><button class="wbtn" type="submit">Add</button></form>
+    <div class="wsec"><h4>Today’s log</h4><div class="wlog" id="wLog"></div></div>
+    <div class="wsec"><h4>Last 7 days</h4><div class="wweek" id="wWeek"></div></div>
+    <div class="wsec"><h4>Settings</h4>
+      <div class="wrow"><label>Unit</label><span class="seg2" id="wUnit"><button type="button" data-u="ml">ml</button><button type="button" data-u="L">Litre</button></span></div>
+      <div class="wrow"><label for="wGoal">Daily goal</label><span class="wnum"><input id="wGoal" type="number" inputmode="decimal" min="0" step="any" aria-label="Daily water goal"><span class="wu">ml</span></span></div>
+    </div>
+    <div class="wsec"><h4>Reminders</h4>
+      <div class="wrow"><button class="switch" id="wRemOn" type="button" role="switch" aria-checked="false"><span class="sw"></span><span>Remind me to drink</span></button></div>
+      <div class="wrow"><label for="wEvery">Every</label><label class="sel"><select id="wEvery" aria-label="Remind every"></select></label></div>
+      <div class="wrow"><label>Between</label><input type="time" id="wFrom" aria-label="Start reminders at"><span>and</span><input type="time" id="wTo" aria-label="Stop reminders at"></div>
+      <p class="wnote">Mimi reminds you with a sound, a voice and the island at the top, while this page is open. The timer restarts each time you log a drink, and reminders stop once you reach your goal.</p>
+    </div>
+  </div>
+</section>
+<button class="fab" id="talkFab" type="button" aria-label="Talk to Mimi"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></button>
+<section class="sheet nsheet" id="nsheet" aria-label="Notes" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3 id="nTitle">Notes</h3><button class="sbtn" id="nClose" type="button">Done</button></div>
+  <form class="ncomp" id="nForm" autocomplete="off">
+    <textarea id="nText" rows="3" maxlength="4000" placeholder="Write a note…" aria-label="Note"></textarea>
+    <div class="nrow"><button class="micb" id="nMic" type="button" aria-label="Dictate a note" hidden><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></button>
+      <span class="nhint" id="nHint">Only you can see your notes.</span><button class="linkbtn" id="nCancel" type="button" hidden>Cancel</button><button class="nsave" type="submit" id="nSave">Save</button></div>
+  </form>
+  <div class="nlist" id="nList"></div>
+</section>
+<section class="sheet csheet" id="csheet" aria-label="Talk to Mimi" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3>Talk to Mimi</h3><button class="sbtn" id="cClose" type="button">Done</button></div>
+  <div class="clog" id="cLog" aria-live="polite"></div>
+  <form class="cbar" id="cForm" autocomplete="off">
+    <button class="micb big" id="cMic" type="button" aria-label="Speak to Mimi"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></button>
+    <input id="cIn" type="text" maxlength="500" placeholder="Ask Mimi or tell her what to do" aria-label="Message to Mimi" enterkeyhint="send">
+    <button class="csend" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </form>
+</section>
+<section class="sheet ssheet" id="ssheet" aria-label="Settings" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3>Settings</h3><button class="sbtn" id="sClose" type="button">Done</button></div>
+  <div class="sbody">
+    <div class="sgrp"><h4>Mimi</h4>
+      <div class="srow"><span>Mimi’s voice</span><button class="switch" id="sVoice" type="button" role="switch" aria-checked="true" aria-label="Mimi’s voice"><span class="sw"></span></button></div>
+      <div class="srow"><span>Voice style</span><span class="seg4" id="sStyle"><button type="button" data-v="airy">Airy</button><button type="button" data-v="buttery">Buttery</button><button type="button" data-v="glassy">Glassy</button><button type="button" data-v="rounded">Rounded</button></span></div>
+      <div class="srow"><span>Mimi’s language<small class="ssub" id="sLangSub"></small></span><label class="sel"><select id="sLang" aria-label="Mimi’s language"></select></label></div>
+      <div class="srow"><span>Sound effects</span><button class="switch" id="sSound" type="button" role="switch" aria-checked="true" aria-label="Sound effects"><span class="sw"></span></button></div>
+      <div class="srow"><span>“Hey Mimi” hands-free<small class="ssub" id="sWakeSub">Say “Hey Mimi” and then what you need.</small></span><button class="switch" id="sWake" type="button" role="switch" aria-checked="false" aria-label="Hey Mimi hands-free"><span class="sw"></span></button></div>
+      <div class="srow"><span>Talk button</span><button class="switch" id="sFab" type="button" role="switch" aria-checked="true" aria-label="Show the Talk to Mimi button"><span class="sw"></span></button></div>
+    </div>
+    <div class="sgrp"><h4>Features</h4>
+      <div class="srow"><span>Water tracking<small class="ssub">Water bar, log, goal and drink reminders</small></span><button class="switch" id="sFeatWater" type="button" role="switch" aria-checked="true" aria-label="Water tracking"><span class="sw"></span></button></div>
+      <div class="srow"><span>Notes<small class="ssub">Private notes and the Notes button</small></span><button class="switch" id="sFeatNotes" type="button" role="switch" aria-checked="true" aria-label="Notes"><span class="sw"></span></button></div>
+      <div class="srow"><span>Dynamic Island<small class="ssub">Live timer pill and pop-up messages at the top</small></span><button class="switch" id="sFeatIsland" type="button" role="switch" aria-checked="true" aria-label="Dynamic Island"><span class="sw"></span></button></div>
+    </div>
+    <div class="sgrp"><h4>Appearance</h4>
+      <div class="srow"><span>Theme</span><span class="seg4 s3" id="sTheme"><button type="button" data-v="auto">Auto</button><button type="button" data-v="light">Light</button><button type="button" data-v="dark">Dark</button></span></div>
+    </div>
+    <div class="sgrp"><h4>Lists</h4>
+      <div id="sLists"></div>
+      <button class="srow link add" id="sNewList" type="button"><span>+ New list</span><b></b></button>
+    </div>
+    <div class="sgrp"><h4>New tasks start with</h4>
+      <div class="srow"><span>List</span><label class="sel"><select id="sCat" aria-label="Default list"></select></label></div>
+      <div class="srow"><span>Priority</span><label class="sel"><select id="sPri" aria-label="Default priority"></select></label></div>
+      <div class="srow"><span>Planned time</span><label class="sel"><select id="sMin" aria-label="Default planned time"></select></label></div>
+    </div>
+    <div class="sgrp" id="sWaterGrp"><h4>Water</h4>
+      <div class="srow"><span>Show water bar</span><button class="switch" id="sWater" type="button" role="switch" aria-checked="true" aria-label="Show water bar"><span class="sw"></span></button></div>
+      <button class="srow link" id="sWaterOpen" type="button"><span>Goal, unit and reminders</span><b id="sWaterTx"></b></button>
+    </div>
+    <div class="sgrp"><h4>Tasks</h4>
+      <button class="srow link" id="sDaily" type="button"><span>Manage daily tasks</span><b id="sDailyTx"></b></button>
+    </div>
+    <p class="wnote">Everything is saved on this device. Use Backup to keep a copy or move it to another device.</p>
+  </div>
+</section>
+<section class="sheet lsheet" id="lsheet" aria-label="List" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3 id="lTitle">New list</h3><button class="sbtn" id="lClose" type="button">Cancel</button></div>
+  <form id="lForm" autocomplete="off" class="lform">
+    <label class="fld">Name<input id="lName" type="text" maxlength="30" placeholder="e.g. Prayer, Gym, Study"></label>
+    <div class="fld" id="lColorFld">Colour<div class="swatches" id="lColors" role="radiogroup" aria-label="Colour"></div></div>
+    <div class="fld">Options for tasks in this list
+      <div class="lopts">
+        <div class="srow"><span>Priority<small class="ssub">High, Medium, Low or Check later</small></span><button class="switch" id="lPri" type="button" role="switch" aria-checked="true" aria-label="Priority"><span class="sw"></span></button></div>
+        <div class="srow"><span>Timer<small class="ssub">Planned time and the task timer</small></span><button class="switch" id="lTimer" type="button" role="switch" aria-checked="true" aria-label="Timer"><span class="sw"></span></button></div>
+        <div class="srow"><span>Reminder<small class="ssub">Remind me at a set time</small></span><button class="switch" id="lRemind" type="button" role="switch" aria-checked="true" aria-label="Reminder"><span class="sw"></span></button></div>
+        <div class="srow"><span>Daily<small class="ssub">Option to repeat a task every day</small></span><button class="switch" id="lDaily" type="button" role="switch" aria-checked="true" aria-label="Daily"><span class="sw"></span></button></div>
+        <div class="srow"><span>Counts in progress<small class="ssub">Off keeps tasks out of totals, % and charts (like Backup)</small></span><button class="switch" id="lCount" type="button" role="switch" aria-checked="true" aria-label="Counts in progress"><span class="sw"></span></button></div>
+      </div>
+      <p class="wnote">Switched-off options are hidden when you add a task to this list.</p>
+    </div>
+    <div class="err" id="lErr" role="alert"></div>
+    <div class="ebtns"><button class="del" type="button" id="lDel">Delete list</button><button class="save" type="submit">Save</button></div>
+  </form>
+</section>
+<section class="sheet" id="vsheet" aria-label="Password vault" aria-hidden="true" style="max-height:90%">
+  <div class="handle"></div>
+  <div class="shead"><h3>Password vault</h3><button class="sbtn" id="vClose" type="button">Close</button></div>
+  <div class="vbody" id="vbody"></div>
+</section>
+<section class="sheet" id="psheet" aria-label="Profile" aria-hidden="true">
+  <div class="handle"></div>
+  <div class="shead"><h3>Profile</h3><button class="sbtn" id="pClose" type="button">Close</button></div>
+  <div class="pbody">
+    <div class="ptop">
+      <button class="pbig" id="pPick" type="button" aria-label="Change photo"><img id="pImg" alt="" hidden><span id="pIni"></span><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></i></button>
+      <div class="pmeta"><b id="pHello">You</b><span id="pSrc">Your profile</span>
+        <div class="prow"><button class="vbtn" id="pChoose" type="button">Change photo</button><button class="vbtn red" id="pRemove" type="button" hidden>Remove</button></div></div>
+    </div>
+    <input type="file" id="pFile" accept="image/*" hidden>
+    <label class="fld">Display name<input type="text" id="pName" maxlength="40" autocomplete="nickname" placeholder="What should Mimi call you?"></label>
+    <div class="err" id="pErr" role="alert"></div>
+    <div class="vnote">Your photo and name are saved privately in your own space. Only you see them.</div>
+    <button class="vbtn pri" id="pSave" type="button">Save profile</button>
+  </div>
+</section>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- Local stand-in for the claude.ai runtime (database, user). Must load before app.js. -->
+<script src="local-runtime.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="app.js"></script>
+<!-- Settings › Backup: import your old claude.ai data, export and restore backups. -->
+<script src="backup-ui.js"></script>
+</body>
+</html>

@@ -10,8 +10,7 @@
 <title>Daily Checklist</title>
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -195,7 +194,7 @@
     <div class="sgrp"><h4>Tasks</h4>
       <button class="srow link" id="sDaily" type="button"><span>Manage daily tasks</span><b id="sDailyTx"></b></button>
     </div>
-    <p class="wnote">These settings are saved on this device. Notes and your checklist sync everywhere.</p>
+    <p class="wnote">Everything is saved on this device. Use Backup to keep a copy or move it to another device.</p>
   </div>
 </section>
 <section class="sheet lsheet" id="lsheet" aria-label="List" aria-hidden="true">
@@ -229,7 +228,7 @@
   <div class="pbody">
     <div class="ptop">
       <button class="pbig" id="pPick" type="button" aria-label="Change photo"><img id="pImg" alt="" hidden><span id="pIni"></span><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></i></button>
-      <div class="pmeta"><b id="pHello">You</b><span id="pSrc">Signed in with your Claude account</span>
+      <div class="pmeta"><b id="pHello">You</b><span id="pSrc">Your profile</span>
         <div class="prow"><button class="vbtn" id="pChoose" type="button">Change photo</button><button class="vbtn red" id="pRemove" type="button" hidden>Remove</button></div></div>
     </div>
     <input type="file" id="pFile" accept="image/*" hidden>
@@ -243,7 +242,9 @@
 
 <!-- Local stand-in for the claude.ai runtime (database, user). Must load before app.js. -->
 <script src="local-runtime.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="vendor/three.min.js"></script>
 <script src="app.js"></script>
+<!-- Settings › Backup: import your old claude.ai data, export and restore backups. -->
+<script src="backup-ui.js"></script>
 </body>
 </html>

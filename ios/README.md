@@ -1,39 +1,30 @@
 # Mimi Checklist — iPhone app
 
-Your daily checklist with Mimi, as a real app on your iPhone: its own icon, full screen,
-stays signed in, and Mimi can hear you (mic button and “Hey Mimi”) using iPhone speech recognition.
+Your daily checklist with Mimi as a real app on your iPhone: its own icon, full screen, works offline,
+and Mimi can hear you (mic button and “Hey Mimi”) using iPhone speech recognition.
 
-## What’s new in version 1.2
+## What’s new in version 2.0
 
-- **Microphone only for your checklist.** Only Claude’s own pages can use the mic, speech, notifications,
-  haptics and clipboard. Other sites shown inside the page are refused.
-- **No wrong-language listening.** If iPhone can’t recognise the language Mimi is set to, the mic says so
-  instead of quietly listening in English.
-- **Your music comes back.** After you use the mic, music in other apps returns to full volume.
-- **Stopping the mic early works.** Tapping stop while iPhone is still asking for permission no longer
-  starts listening afterwards.
+- **The whole checklist is inside the app.** It no longer opens claude.ai, so there’s no sign-in, and it
+  works without internet (the 3D island and fonts are bundled too).
+- **Your data is saved on your iPhone**, in the app’s own storage. It’s included when your iPhone backs up
+  to iCloud or a computer.
+- **Bring your old checklist over.** Settings › Backup › **Restore from a backup**, then pick the backup
+  file made from your claude.ai checklist (see “Moving your old data” below).
+- **Backups.** Settings › Backup › **Export a backup** opens the share sheet: save it to Files, AirDrop it or
+  mail it to yourself. Restore it the same way on another device or in the web app.
+- The island’s day labels no longer cover the date on smaller screens, and the mic tells you when your iPhone
+  can’t listen in the language Mimi is set to.
 
-## What’s new in version 1.1
+Earlier: reminders as real notifications (1.1), profile photo, haptics, a self-clearing clipboard for the
+password vault, microphone only for the checklist page (1.2).
 
-- **Reminders ring even when the app is closed.** Task reminders (for the next 7 days) are handed to iOS
-  as real notifications with sound, on the lock screen too. The first time, iPhone asks to allow
-  notifications: tap **Allow**. Open the app once after adding or changing a reminder so it can update them.
-- **Profile photo.** Tap the round avatar at the top right to pick a photo from your library or take a new one
-  (iPhone asks for Photos or Camera access the first time).
-- **Haptics.** Reminders, water nudges and task actions now tap your iPhone with gentle vibrations.
-- **Google sign-in, handled.** Tapping “Continue with Google” no longer lands on Google’s error page. The app
-  explains it and takes you straight to the email sign-in (see Signing in below).
-- **Password vault copy** works in the app, and a copied password clears from the clipboard after 60 seconds.
-- Everything else that’s new on the checklist page (lists, Backup list, moving tasks between days, daily time
-  totals, the vault, Mimi in Tamil, Malayalam, Telugu and Hindi, Dynamic Island on/off, the scroll fix) shows
-  up in the app on its own. Pull down to refresh.
-
-**Updating from 1.0:** replace your old `MimiChecklist.swiftpm` folder with this one, open it in Xcode, and press
-▶ Run with your iPhone connected. Your tasks are safe: they live in your checklist, not in the app.
+**Updating from 1.x:** replace your old `MimiChecklist.swiftpm` folder with this one, open it in Xcode and press
+▶ Run. Then restore your old data once (below).
 
 ## Install on your iPhone (about 5 minutes, one time)
 
-You need: this Mac with **Xcode** (free, App Store), your iPhone, and a USB cable (first time).
+You need: a Mac with **Xcode** (free, App Store), your iPhone, and a USB cable (first time).
 
 1. **Open the project.** Double-click `MimiChecklist.swiftpm`. It opens in Xcode.
    (If it opens in Swift Playgrounds instead: right-click → Open With → Xcode.)
@@ -51,22 +42,33 @@ You need: this Mac with **Xcode** (free, App Store), your iPhone, and a USB cabl
 After that you can run it over Wi-Fi without the cable (Window → Devices and Simulators →
 “Connect via network”).
 
-## Signing in
+## Moving your old data
 
-The app opens your checklist on claude.ai. **Sign in with your email** (claude.ai sends you a code).
-Google doesn’t allow its sign-in button inside apps that show web pages like this one, so
-“Continue with Google” won’t work here. Use the email option with the **same email address** as your
-Claude account (your Google one, if that’s how you signed up). It opens the same checklist, and you stay
-signed in after that.
+Your claude.ai checklist was turned into one backup file (tasks, daily tasks, lists, water, settings, notes and
+profile photo). Put that file somewhere your iPhone can reach it (AirDrop it, save it to iCloud Drive / Files,
+or mail it to yourself), then in the app: **Settings › Backup › Restore from a backup** and pick the file.
+Do this once; restoring again just replaces the same items.
+
+Keep that backup file private: it holds your notes and photo.
 
 ## Good to know
 
-- **Free Apple ID:** apps you install yourself stop opening after **7 days**. Just plug in and press Run
-  again (your data is safe — it lives in your checklist, not in the app).
-  A paid Apple Developer account (₹8,700/year) removes this limit and lets you share via TestFlight.
+- **Free Apple ID:** apps you install yourself stop opening after **7 days**. Plug in and press Run again.
+  Your data is safe: it stays in the app’s storage when you reinstall over it. (Deleting the app deletes its
+  data, so export a backup first.) A paid Apple Developer account (₹8,700/year) removes this limit and
+  lets you share via TestFlight.
 - **Voice:** the first time you tap the mic, iPhone asks for Microphone and Speech Recognition — tap Allow.
   “Hey Mimi” works while the app is open on screen.
-- **Updates:** changes to your checklist page show up in the app automatically — no reinstall needed.
-  Pull down on the page to refresh.
-- The Dynamic Island animation and Mimi’s voice come from the page, so they show while the app is open.
-  Reminder notifications work when the app is closed (see version 1.1 above).
+- **Reminders** ring as iPhone notifications even when the app is closed (the next 7 days). Open the app once
+  after adding or changing a reminder so it can update them.
+- **Not synced between devices.** The iPhone app and the web app each keep their own data. Use Export / Restore
+  to move it.
+
+## For developers
+
+- The app shows the web app from the repository’s `web/` folder, bundled as `Web/` in this package.
+  After changing anything in `web/`, run `scripts/sync-ios-web.sh` (and `--check` to verify the copy is current).
+- `NativeStore.swift` keeps the page’s data in `Application Support/MimiChecklist/store.json`. The page loads
+  it each time it opens; if the file can’t be read, the page offers no saving, so the file is never overwritten.
+- `AppOrigin.swift` makes the bundled page the only one that may use the native extras
+  (storage, speech, notifications, haptics, clipboard, sharing). Web links open in Safari.

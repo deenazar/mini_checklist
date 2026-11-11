@@ -242,7 +242,7 @@
     let yaw=0, yawV=0, drag=null, autoT=0;
     const target=new THREE.Vector3(0,.55,0);
     function placeCam(){ const narrow=stage.clientWidth<520; const dist=narrow?9.6:8.2, pitch=.36; cam.fov=narrow?40:34;
-      cam.position.set(Math.sin(yaw)*Math.cos(pitch)*dist, target.y+Math.sin(pitch)*dist, Math.cos(yaw)*Math.cos(pitch)*dist); cam.lookAt(target.x,target.y-(narrow?.2:.05),target.z); cam.updateProjectionMatrix(); }
+      cam.position.set(Math.sin(yaw)*Math.cos(pitch)*dist, target.y+Math.sin(pitch)*dist, Math.cos(yaw)*Math.cos(pitch)*dist); cam.lookAt(target.x,target.y+(narrow?.3:-.05),target.z); /* phones: aim higher so the island and its day labels sit below the date */ cam.updateProjectionMatrix(); }
     function size(){ const w=stage.clientWidth,h=stage.clientHeight; R.setSize(w,h,false); cam.aspect=w/h; placeCam(); }
     new ResizeObserver(size).observe(stage); size();
 
@@ -318,8 +318,12 @@
       for(let i=orbs.length-1;i>=0;i--) if(orbs[i].userData.out&&orbs[i].userData.p>=1){ island.remove(orbs[i]); orbs.splice(i,1); }
       R.render(scene,cam);
       const W=stage.clientWidth, H=stage.clientHeight;
+      // Labels of the far pillars can land on the date and buttons at the top on a phone: hide those.
+      const hudEl=stage.querySelector('.hud.top'), hudB=hudEl?hudEl.offsetTop+hudEl.offsetHeight+4:0;
       pillars.forEach((p,i)=>{ v3.set(p.position.x,p.scale.y+.28,p.position.z); island.localToWorld(v3); v3.project(cam);
-        pl[i].style.transform='translate(calc('+((v3.x*.5+.5)*W).toFixed(1)+'px - 50%),calc('+((-v3.y*.5+.5)*H).toFixed(1)+'px - 100%))'; });
+        const lx=(v3.x*.5+.5)*W, ly=(-v3.y*.5+.5)*H, lh=pl[i].offsetHeight||26, hide=ly-lh<hudB;
+        pl[i].style.transform='translate(calc('+lx.toFixed(1)+'px - 50%),calc('+ly.toFixed(1)+'px - 100%))';
+        if(pl[i].classList.contains('under')!==hide){ pl[i].classList.toggle('under',hide); pl[i].tabIndex=hide?-1:0; } });
       if(bubOn){ head.getWorldPosition(v3); v3.y+=.55; v3.project(cam); bub.style.transform='translate('+((v3.x*.5+.5)*W-6).toFixed(1)+'px,'+((-v3.y*.5+.5)*H-34).toFixed(1)+'px)'; }
       requestAnimationFrame(frame);
     }
@@ -612,7 +616,7 @@
     else toast('Couldn’t save that change. Check your connection and try again.',true);
   }
   function mutate(k,fn){
-    if(!db){ toast('Your checklist isn’t connected yet, so changes can’t be saved.',true); return Promise.resolve(); }
+    if(!db){ toast('Your saved checklist couldn’t be opened, so this change isn’t saved. Close and reopen the app.',true); return Promise.resolve(); }
     const next=fn(tasksFor(k).map(x=>({...x})));
     days[k]={...(days[k]||{}),date:k,tasks:next}; render();
     const body={...days[k],updatedAt:new Date().toISOString()};
@@ -1048,7 +1052,9 @@
       let r; try{ r=new SR(); }catch(e){ return false; }
       r.lang=LOC[curLang()]; r.interimResults=true; r.continuous=false;
       r.onresult=ev=>{ let fin='', part=''; for(let i=ev.resultIndex;i<ev.results.length;i++){ const t=ev.results[i][0].transcript; if(ev.results[i].isFinal) fin+=t; else part+=t; } if(part) partial&&partial(part); if(fin) final&&final(fin); };
-      r.onerror=ev=>{ if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ toast('Microphone isn’t allowed here. Tap the text box and use the mic on your keyboard.'); } };
+      r.onerror=ev=>{ if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ toast('Microphone isn’t allowed here. Tap the text box and use the mic on your keyboard.'); }
+        else if(ev.error==='language-not-supported'){ toast('This device can’t listen in '+(LNAME[curLang()]||'this language')+' yet. Use the mic on your keyboard instead.'); }
+        else if(ev.error==='audio-capture'){ toast('The microphone is busy. Try again in a moment.'); } };
       r.onend=()=>{ if(!listener.on) return; listener.on=false; end&&end('stopped'); };
       listener.on=true; listener.stop=()=>{ try{ r.stop(); }catch(_){} };
       try{ r.start(); }catch(e){ listener.on=false; return false; }
@@ -1559,7 +1565,7 @@
   if(window.claude&&claude.use){
     claude.use('db').then(d=>{
       db=d;
-      if(!db){ toast('Sign in to claude.ai to save your checklist.',true); return; }
+      if(!db){ toast('Your saved checklist couldn’t be opened. Close and reopen the app.',true); return; }
       const timer=setTimeout(()=>toast('Your checklist can’t be reached yet. Showing what’s loaded so far.',true),10000);
       db.collection('days').orderBy('date','desc').limit(60).onSnapshot(snap=>{
         if(!snap.metadata.fromCache){ clearTimeout(timer); daysReady=true; }
@@ -1583,5 +1589,5 @@
         render();
       },()=>{});
     });
-  } else toast('Open this page on claude.ai to save your checklist.',true);
+  } else toast('Your checklist can’t be saved on this device.',true);
 })();

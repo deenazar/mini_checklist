@@ -18,8 +18,8 @@ let package = Package(
             targets: ["AppModule"],
             bundleIdentifier: "com.azarudeen.mimichecklist",
             teamIdentifier: "",
-            displayVersion: "1.2",
-            bundleVersion: "3",
+            displayVersion: "2.0",
+            bundleVersion: "4",
             appIcon: .asset("AppIcon"),
             accentColor: .asset("AccentColor"),
             supportedDeviceFamilies: [
@@ -44,7 +44,11 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "AppModule",
-            path: "."
+            path: ".",
+            // The checklist web app (a copy of the repository's web/ folder; run scripts/sync-ios-web.sh).
+            resources: [
+                .copy("Web")
+            ]
         )
     ]
 )

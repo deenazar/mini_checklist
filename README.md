@@ -14,9 +14,10 @@ Then open <http://localhost:8000>. Data is saved in your browser. See [`web/READ
 
 ## iPhone app
 
-The iPhone app lives in [`ios/`](ios/). It is a SwiftUI app (an Xcode / Swift Playgrounds
-`.swiftpm` package) that opens the checklist page full screen and adds native extras:
-iPhone speech recognition for the mic button and “Hey Mimi”, task reminders as real iOS
-notifications, haptics, and a clipboard that clears copied vault passwords after 60 seconds.
+The iPhone app lives in [`ios/`](ios/). It's a SwiftUI app (an Xcode / Swift Playgrounds `.swiftpm` package)
+that bundles the web app, so it works offline with no sign-in, and adds native extras: data saved in the app,
+iPhone speech recognition for the mic and “Hey Mimi”, reminders as real notifications, haptics, a clipboard
+that clears copied vault passwords after 60 seconds, and backups through the share sheet.
 
-See [`ios/README.md`](ios/README.md) for install steps (Mac with Xcode + iPhone, about 5 minutes).
+See [`ios/README.md`](ios/README.md) for install steps (Mac with Xcode + iPhone, about 5 minutes) and for moving
+your old claude.ai data in. After changing `web/`, run `scripts/sync-ios-web.sh` to update the app's copy.

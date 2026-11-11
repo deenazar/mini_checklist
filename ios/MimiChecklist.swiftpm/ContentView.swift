@@ -1,8 +1,5 @@
 import SwiftUI
 
-/// The checklist page this app opens.
-let checklistURL = URL(string: "https://claude.ai/artifact/HPnWLxmpMNayHV278scX6m")!
-
 struct ContentView: View {
     @StateObject private var model = WebModel()
 
@@ -51,10 +48,10 @@ private struct OfflineView: View {
     let retry: () -> Void
     var body: some View {
         VStack(spacing: 14) {
-            Image(systemName: "wifi.exclamationmark")
+            Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 46, weight: .semibold))
                 .foregroundStyle(.secondary)
-            Text("Can’t reach your checklist")
+            Text("Can’t open your checklist")
                 .font(.title3.weight(.bold))
             Text(message)
                 .font(.subheadline)
