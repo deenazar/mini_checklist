@@ -2,6 +2,16 @@
 
 Mimi Checklist — a daily checklist with Mimi, the voice assistant.
 
+## Web app
+
+The checklist itself lives in [`web/`](web/) and runs in any browser:
+
+```bash
+python3 -m http.server 8000 --directory web
+```
+
+Then open <http://localhost:8000>. Data is saved in your browser. See [`web/README.md`](web/README.md).
+
 ## iPhone app
 
 The iPhone app lives in [`ios/`](ios/). It is a SwiftUI app (an Xcode / Swift Playgrounds
