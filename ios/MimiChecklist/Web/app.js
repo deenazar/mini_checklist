@@ -535,7 +535,9 @@
     if(r){ const ms=elapsed(r), est=(r.est||0)*60000, over=est&&ms>est, f=est?Math.min(1,ms/est):((ms/60000)%60)/60, C=50.3;
       L.innerHTML='<svg class="spin" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="#333"/><circle cx="10" cy="10" r="8" stroke="'+(over?'#FF6B6F':'#FF6B4A')+'" stroke-dasharray="'+C+'" stroke-dashoffset="'+(C*(1-f))+'" transform="rotate(-90 10 10)" stroke-linecap="round"/></svg>';
       const sp=document.createElement('span'); sp.textContent=short(r.text,16); L.append(sp);
-      Rt.textContent=est?(over?'+'+clock(ms-est):clock(est-ms)):clock(ms); Rt.className='rt '+(over?'over':'run'); di.classList.add('wide'); }
+      // Beside a real Dynamic Island there's only room for minutes:seconds (89:56, not 1:29:56).
+      const ck=document.documentElement.classList.contains('hw-island')?(x=>{ const s=Math.max(0,Math.floor(x/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }):clock;
+      Rt.textContent=est?(over?'+'+ck(ms-est):ck(est-ms)):ck(ms); Rt.className='rt '+(over?'over':'run'); di.classList.add('wide'); }
     else { const s=stats(tasksFor(todayKey())), left=s.total-s.done; L.innerHTML='<span class="av">'+CATSVG+'</span>';
       Rt.textContent=!s.total?'Mimi':left?left+' left':'All done'; Rt.className='rt'; di.classList.remove('wide'); }
   }
@@ -822,6 +824,14 @@
     out.sort((a,b)=>a.at-b.at); const list=out.slice(0,60), sig=JSON.stringify(list);
     if(sig===nativeSig) return; nativeSig=sig; try{ N.schedule(list); }catch(e){} }
   setInterval(syncNativeReminders,5000);
+  /* iPhone app: show the running task timer in the real Dynamic Island and on the Lock Screen (Live Activity).
+     The app's Live Activity counts on its own, so this only needs to send changes: start, pause, switch task, done. */
+  let actSig='';
+  function syncNativeActivity(){ const N=window.mimiNative; if(!N||typeof N.activity!=='function') return;
+    const r=feat.island!==false?runningTask():null, s=stats(tasksFor(todayKey()));
+    const msg=r?{state:'run',id:r.id,title:short(r.text,60),list:catOf(r).n,color:catOf(r).c,startedAt:Math.round(r.timer.since-(r.timer.acc||0)),plannedMin:r.est||0,done:s.done,total:s.total}:{state:'end'};
+    const sig=JSON.stringify(msg); if(sig===actSig) return; actSig=sig; try{ N.activity(msg); }catch(e){} }
+  setInterval(syncNativeActivity,1000);
 
   const pep=()=>{ const s=window.__s||{done:0,total:0}, left=s.total-s.done, r=runningTask();
     if(r) return 'Stay focused on “'+short(r.text,18)+'”!';

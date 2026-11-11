@@ -1,6 +1,5 @@
 /* Mimi Checklist styles. Base reset first (from the claude.ai page shell), then the app. */
-:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{color-scheme:light;box-sizing:border-box}
 body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}
 img{max-width:100%}
 [hidden]:not([hidden=until-found i]){display:none!important}
@@ -592,3 +591,27 @@ button,[role=button],select,label,.dchip,.fchip{touch-action:manipulation;-webki
   .switch .lbl{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- Full screen on phones (values set by device-fit.js) ----------
+   The island's sky runs behind the status bar; the date row and the pill sit below it. */
+:root{--safe-top:0px;--di-top:10px;--hud-top:54px;--hud-top-noisland:14px}
+.stage{height:calc(clamp(230px,40vh,400px) + var(--safe-top))}
+@media (max-height:700px){ .stage{height:calc(clamp(190px,36vh,400px) + var(--safe-top))} }
+.di{top:var(--di-top)}
+.hud.top{padding-top:var(--hud-top)}
+.stage.noisland .hud.top{padding-top:var(--hud-top-noisland)}
+
+/* iPhones with a Dynamic Island: the pill lines up with the real island (camera cutout in the middle).
+   Idle it is exactly the island, so nothing extra shows; tap the island to open Mimi's panel.
+   Content always stays outside the cutout, like iOS's own island. */
+html.hw-island .di{transition:width .5s cubic-bezier(.2,1.25,.3,1),height .5s cubic-bezier(.2,1.25,.3,1),border-radius .5s cubic-bezier(.2,1.25,.3,1),transform .2s}
+html.hw-island .di:not(.wide):not(.note):not(.big){width:126px;height:37px;border-radius:18.5px}
+html.hw-island .di:not(.wide):not(.note):not(.big) .c{opacity:0}
+html.hw-island .di.wide:not(.note):not(.big){width:min(224px,calc(100% - 32px));height:37px;border-radius:18.5px}
+html.hw-island .di.wide .c{height:37px;padding:0 11px 0 11px}
+html.hw-island .di.wide .rt{font-size:11.5px;letter-spacing:-.02em}
+html.hw-island .di.wide .lt span{display:none}
+html.hw-island .di.note{height:96px;border-radius:40px}
+html.hw-island .di .n{padding-top:38px}
+html.hw-island .di.big{height:204px;border-radius:44px}
+html.hw-island .di .x{padding-top:46px}

@@ -1,0 +1,10 @@
+// Copy this file to Local.xcconfig (same folder) and fill it in. Local.xcconfig is not committed.
+
+// Your Apple team ID (10 characters). Find it with:  ios/find-team-id.sh
+DEVELOPMENT_TEAM = ABCDE12345
+
+// If Xcode says the bundle ID is taken, make it unique, e.g. com.yourname.mimichecklist
+// APP_BUNDLE_ID = com.azarudeen.mimichecklist
+
+// Google sign-in: the iOS OAuth client ID from Google Cloud Console (see ios/README.md).
+GOOGLE_CLIENT_ID = 1234567890-abcdefghijklmnop.apps.googleusercontent.com

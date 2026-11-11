@@ -284,8 +284,36 @@
     return paths.length;
   }
 
+  /* ---------- Changes from Google sync (iPhone app) ----------
+     The app merged newer items from another device; update memory and live views without sending them back. */
+  window.__mimiStoreApply = function (changes) {
+    if (store.kind !== 'app' || !changes || typeof changes !== 'object') return;
+    Object.keys(changes).forEach(function (k) {
+      var v = changes[k];
+      if (v === null) delete mem[k]; else if (typeof v === 'string') mem[k] = v; else return;
+      if (k.indexOf(DOC_PREFIX) === 0) notify(k.slice(DOC_PREFIX.length));
+    });
+  };
+
+  var FLAG_PREFIX = 'mimi-flag:';
+
   window.mimiLocal = {
     storage: store.kind, // 'browser' or 'app'
+    /** Reads a small saved flag, or saves it when a value is given (not synced). Returns a Promise. */
+    flag: function (name, value) {
+      var write = arguments.length > 1;
+      return ready.then(function () {
+        var k = FLAG_PREFIX + name;
+        if (write) { try { store.set(k, String(value)); } catch (e) {} return String(value); }
+        return store.get(k);
+      });
+    },
+    /** False when the app's saved data couldn't be read (then nothing is saved either). */
+    healthy: function () { return ready.then(function () { return !loadFailed; }); },
+    /** True when there is any saved checklist data on this device. */
+    hasData: function () {
+      return ready.then(function () { return store.keys().some(function (k) { return k.indexOf(DOC_PREFIX) === 0; }); });
+    },
     /** Resolves to the backup as a JSON string. */
     exportData: function () { return ready.then(exportNow); },
     /** Adds the backup's items, replacing items with the same path. Resolves to how many were restored. */

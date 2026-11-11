@@ -11,7 +11,10 @@ It is the same app as the claude.ai artifact the iPhone app opens, split into no
 | `styles.css` | All styles (light and dark themes) |
 | `app.js` | The app: tasks, timers, reminders, water, notes, lists, vault, Mimi and her 3D island |
 | `local-runtime.js` | Stands in for claude.ai's services so the app runs anywhere (see below) |
+| `device-fit.js` | Fits the page to the phone: full screen behind the status bar, Mimi's pill over the Dynamic Island |
 | `backup-ui.js` | Settings › Backup: export a backup file, restore one |
+| `account-ui.js` | Settings › Account & sync (iPhone app): Google sign-in and encrypted sync status |
+| `landing.js`, `landing.css` | The animated welcome page (first run; open it again with `index.html?welcome`) |
 | `vendor/` | three.js r128 and the fonts, bundled so the app works offline (licences included) |
 | `icon.png` | App icon (same as the iPhone app) |
 

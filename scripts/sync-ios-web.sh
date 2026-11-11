@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Copies the web app (web/) into the iPhone app (ios/MimiChecklist.swiftpm/Web), which bundles it.
+# Copies the web app (web/) into the iPhone app (ios/MimiChecklist/Web), which bundles it.
 # Run after changing anything in web/.   Check only (no changes, exit 1 if out of date):  --check
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 src="$root/web/"
-dst="$root/ios/MimiChecklist.swiftpm/Web/"
+dst="$root/ios/MimiChecklist/Web/"
 
 if [[ "${1:-}" == "--check" ]]; then
   if diff -rq -x README.md -x .DS_Store "$src" "$dst" >/dev/null 2>&1; then
@@ -23,4 +23,4 @@ mkdir -p "$dst"
 cp -R "$src". "$dst"
 rm -f "$dst/README.md"
 find "$dst" -name .DS_Store -delete
-echo "Copied web/ into ios/MimiChecklist.swiftpm/Web"
+echo "Copied web/ into ios/MimiChecklist/Web"

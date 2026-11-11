@@ -1,0 +1,8 @@
+// Shared build settings for Mimi Checklist and its widget.
+// Put your own values in Config/Local.xcconfig (not committed). See Config/Local.example.xcconfig.
+
+APP_BUNDLE_ID = com.azarudeen.mimichecklist
+DEVELOPMENT_TEAM =
+GOOGLE_CLIENT_ID =
+
+#include? "Local.xcconfig"

@@ -10,6 +10,8 @@ import UserNotifications
 /// - `mimiNative.copy(text)` copies to the clipboard (used by the password vault);
 ///   copied passwords clear themselves after 60 seconds.
 /// - `mimiNative.share(fileName, text)` opens the share sheet with a file (used to export backups).
+/// - `mimiNative.activity(state)` shows the running task timer in the Dynamic Island and on the Lock Screen.
+/// - `mimiNative.account(action)` Google sign-in and sync (see SyncEngine).
 final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCenterDelegate {
     static let handlerName = "mimiNative"
     static let idPrefix = "mimi-rem-"
@@ -22,7 +24,9 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
         schedule: function (list) { h.postMessage({ cmd: 'schedule', list: Array.isArray(list) ? list.slice(0, 60) : [] }); },
         copy: function (text) { h.postMessage({ cmd: 'copy', text: String(text || '').slice(0, 4000) }); },
         haptic: function (kind) { h.postMessage({ cmd: 'haptic', kind: String(kind || 'light') }); },
-        share: function (name, text) { h.postMessage({ cmd: 'share', name: String(name || 'mimi-checklist-backup.json').slice(0, 120), text: String(text || '') }); }
+        share: function (name, text) { h.postMessage({ cmd: 'share', name: String(name || 'mimi-checklist-backup.json').slice(0, 120), text: String(text || '') }); },
+        activity: function (state) { h.postMessage({ cmd: 'activity', state: state && typeof state === 'object' ? state : { state: 'end' } }); },
+        account: function (action) { h.postMessage({ cmd: 'account', action: String(action || 'status') }); }
       };
       try {
         navigator.vibrate = function (p) {
@@ -57,6 +61,12 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
             haptic((body["kind"] as? String) ?? "light")
         case "share":
             share(fileNamed: (body["name"] as? String) ?? "", text: (body["text"] as? String) ?? "")
+        case "activity":
+            let state = (body["state"] as? [String: Any]) ?? [:]
+            Task { @MainActor in LiveActivityController.shared.handle(state) }
+        case "account":
+            let action = (body["action"] as? String) ?? "status"
+            Task { @MainActor in SyncEngine.shared.handle(action: action) }
         default:
             break
         }

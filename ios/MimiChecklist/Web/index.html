@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="landing.css">
 </head>
 <body>
 <div class="app">
@@ -240,11 +241,16 @@
 </section>
 <div class="toast" id="toast" role="status"></div>
 
+<!-- Fits the page to the phone (safe areas, Dynamic Island). Must load before app.js. -->
+<script src="device-fit.js"></script>
 <!-- Local stand-in for the claude.ai runtime (database, user). Must load before app.js. -->
 <script src="local-runtime.js"></script>
 <script src="vendor/three.min.js"></script>
 <script src="app.js"></script>
 <!-- Settings › Backup: import your old claude.ai data, export and restore backups. -->
 <script src="backup-ui.js"></script>
+<!-- Settings › Account & sync (iPhone app), then the welcome page. -->
+<script src="account-ui.js"></script>
+<script src="landing.js"></script>
 </body>
 </html>

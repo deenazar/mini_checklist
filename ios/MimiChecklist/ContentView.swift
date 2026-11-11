@@ -7,8 +7,9 @@ struct ContentView: View {
         ZStack {
             Color(uiColor: .systemBackground).ignoresSafeArea()
 
+            // Full screen: the page's sky runs behind the status bar and the Dynamic Island.
             ChecklistWebView(model: model)
-                .ignoresSafeArea(.container, edges: .bottom)
+                .ignoresSafeArea()
                 .opacity(model.firstLoadDone ? 1 : 0)
                 .animation(.easeOut(duration: 0.35), value: model.firstLoadDone)
 

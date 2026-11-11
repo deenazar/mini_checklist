@@ -58,7 +58,8 @@ struct ChecklistWebView: UIViewRepresentable {
         webView.allowsBackForwardNavigationGestures = false
         webView.isOpaque = false
         webView.backgroundColor = .systemBackground
-        webView.scrollView.contentInsetAdjustmentBehavior = .automatic
+        // The page handles the safe areas itself (CSS env(safe-area-inset-*)).
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
         #if DEBUG
         // Safari Web Inspector, for development builds only.
         if #available(iOS 16.4, *) { webView.isInspectable = true }
@@ -70,6 +71,9 @@ struct ChecklistWebView: UIViewRepresentable {
 
         speech.webView = webView
         model.webView = webView
+        // Google sign-in and encrypted sync: give it the page to report to, and sync now.
+        SyncEngine.shared.webView = webView
+        SyncEngine.shared.appBecameActive()
         Self.loadApp(into: webView, model: model)
         return webView
     }

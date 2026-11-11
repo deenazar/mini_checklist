@@ -6,12 +6,7 @@ import WebKit
 /// notifications, haptics, clipboard and sharing.
 enum AppOrigin {
     /// The bundled `Web` folder.
-    static let webRoot: URL? = {
-        for bundle in [Bundle.module, Bundle.main] {
-            if let url = bundle.url(forResource: "Web", withExtension: nil) { return url }
-        }
-        return nil
-    }()
+    static let webRoot: URL? = Bundle.main.url(forResource: "Web", withExtension: nil)
 
     static var indexURL: URL? { webRoot?.appendingPathComponent("index.html") }
 
