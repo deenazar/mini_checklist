@@ -18,8 +18,8 @@ let package = Package(
             targets: ["AppModule"],
             bundleIdentifier: "com.azarudeen.mimichecklist",
             teamIdentifier: "",
-            displayVersion: "1.1",
-            bundleVersion: "2",
+            displayVersion: "1.2",
+            bundleVersion: "3",
             appIcon: .asset("AppIcon"),
             accentColor: .asset("AccentColor"),
             supportedDeviceFamilies: [

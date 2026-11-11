@@ -3,6 +3,16 @@
 Your daily checklist with Mimi, as a real app on your iPhone: its own icon, full screen,
 stays signed in, and Mimi can hear you (mic button and “Hey Mimi”) using iPhone speech recognition.
 
+## What’s new in version 1.2
+
+- **Microphone only for your checklist.** Only Claude’s own pages can use the mic, speech, notifications,
+  haptics and clipboard. Other sites shown inside the page are refused.
+- **No wrong-language listening.** If iPhone can’t recognise the language Mimi is set to, the mic says so
+  instead of quietly listening in English.
+- **Your music comes back.** After you use the mic, music in other apps returns to full volume.
+- **Stopping the mic early works.** Tapping stop while iPhone is still asking for permission no longer
+  starts listening afterwards.
+
 ## What’s new in version 1.1
 
 - **Reminders ring even when the app is closed.** Task reminders (for the next 7 days) are handed to iOS

@@ -40,9 +40,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let cmd = body["cmd"] as? String else { return }
         // Only listen to Claude's own pages.
-        let host = message.frameInfo.securityOrigin.host.lowercased()
-        let trusted = ["claude.ai", "claudeusercontent.com", "claude.com", "anthropic.com"]
-        guard trusted.contains(where: { host == $0 || host.hasSuffix("." + $0) }) else { return }
+        guard TrustedHosts.contains(message.frameInfo.securityOrigin) else { return }
 
         switch cmd {
         case "schedule":
@@ -119,9 +117,13 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
             case .authorized, .provisional, .ephemeral:
                 apply()
             case .notDetermined:
-                guard !items.isEmpty, !self.askedPermission else { return }
-                self.askedPermission = true
-                center.requestAuthorization(options: [.alert, .sound, .badge]) { ok, _ in if ok { apply() } }
+                guard !items.isEmpty else { return }
+                // The settings callback runs on a background queue; keep the flag on the main thread.
+                DispatchQueue.main.async {
+                    guard !self.askedPermission else { return }
+                    self.askedPermission = true
+                    center.requestAuthorization(options: [.alert, .sound, .badge]) { ok, _ in if ok { apply() } }
+                }
             default:
                 break
             }

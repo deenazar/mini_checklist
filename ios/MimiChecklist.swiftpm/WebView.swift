@@ -50,7 +50,10 @@ struct ChecklistWebView: UIViewRepresentable {
         webView.isOpaque = false
         webView.backgroundColor = .systemBackground
         webView.scrollView.contentInsetAdjustmentBehavior = .automatic
+        #if DEBUG
+        // Safari Web Inspector, for development builds only.
         if #available(iOS 16.4, *) { webView.isInspectable = true }
+        #endif
 
         let refresh = UIRefreshControl()
         refresh.addTarget(context.coordinator, action: #selector(Coordinator.pulledToRefresh(_:)), for: .valueChanged)
@@ -114,9 +117,8 @@ struct ChecklistWebView: UIViewRepresentable {
 
         /// Sites that stay inside the app. Everything else opens in Safari.
         private func staysInApp(_ url: URL) -> Bool {
-            guard let host = url.host?.lowercased() else { return true }
-            let inApp = ["claude.ai", "anthropic.com", "claudeusercontent.com", "claude.com"]
-            return inApp.contains { host == $0 || host.hasSuffix("." + $0) }
+            guard url.host != nil else { return true }
+            return TrustedHosts.contains(url.host)
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
@@ -187,6 +189,10 @@ struct ChecklistWebView: UIViewRepresentable {
         func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin,
                      initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
                      decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+            // Only Claude's own pages get the microphone; other sites embedded in the page never do.
+            guard TrustedHosts.contains(origin), TrustedHosts.contains(frame.securityOrigin) else {
+                return decisionHandler(.deny)
+            }
             decisionHandler(type == .microphone ? .grant : .prompt)
         }
 
