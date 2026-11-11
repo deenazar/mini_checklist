@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Xcode / Swift Package Manager
+xcuserdata/
+DerivedData/
+.build/
+*.xcuserstate
+ios/MimiChecklist.swiftpm/.swiftpm/
