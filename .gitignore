@@ -6,4 +6,7 @@ xcuserdata/
 DerivedData/
 .build/
 *.xcuserstate
-ios/MimiChecklist.swiftpm/.swiftpm/
+
+# iOS: generated Xcode project and personal settings
+ios/MimiChecklist.xcodeproj/
+ios/Config/Local.xcconfig

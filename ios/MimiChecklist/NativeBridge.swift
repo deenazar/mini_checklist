@@ -9,6 +9,9 @@ import UserNotifications
 /// - `navigator.vibrate(...)` becomes iPhone haptics (Safari on iPhone ignores vibrate).
 /// - `mimiNative.copy(text)` copies to the clipboard (used by the password vault);
 ///   copied passwords clear themselves after 60 seconds.
+/// - `mimiNative.share(fileName, text)` opens the share sheet with a file (used to export backups).
+/// - `mimiNative.activity(state)` shows the running task timer in the Dynamic Island and on the Lock Screen.
+/// - `mimiNative.account(action)` Google sign-in and sync (see SyncEngine).
 final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCenterDelegate {
     static let handlerName = "mimiNative"
     static let idPrefix = "mimi-rem-"
@@ -20,7 +23,12 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
       window.mimiNative = {
         schedule: function (list) { h.postMessage({ cmd: 'schedule', list: Array.isArray(list) ? list.slice(0, 60) : [] }); },
         copy: function (text) { h.postMessage({ cmd: 'copy', text: String(text || '').slice(0, 4000) }); },
-        haptic: function (kind) { h.postMessage({ cmd: 'haptic', kind: String(kind || 'light') }); }
+        haptic: function (kind) { h.postMessage({ cmd: 'haptic', kind: String(kind || 'light') }); },
+        share: function (name, text) { h.postMessage({ cmd: 'share', name: String(name || 'mimi-checklist-backup.json').slice(0, 120), text: String(text || '') }); },
+        activity: function (state) { h.postMessage({ cmd: 'activity', state: state && typeof state === 'object' ? state : { state: 'end' } }); },
+        account: function (action) { h.postMessage({ cmd: 'account', action: String(action || 'status') }); },
+        speak: function (text, lang) { h.postMessage({ cmd: 'speak', text: String(text || '').slice(0, 1200), lang: String(lang || 'en-IN') }); },
+        stopSpeaking: function () { h.postMessage({ cmd: 'stopSpeaking' }); }
       };
       try {
         navigator.vibrate = function (p) {
@@ -39,8 +47,8 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let cmd = body["cmd"] as? String else { return }
-        // Only listen to Claude's own pages.
-        guard TrustedHosts.contains(message.frameInfo.securityOrigin) else { return }
+        // Only listen to the bundled checklist page.
+        guard AppOrigin.isAppPage(message.frameInfo) else { return }
 
         switch cmd {
         case "schedule":
@@ -53,8 +61,56 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
             haptic("light")
         case "haptic":
             haptic((body["kind"] as? String) ?? "light")
+        case "share":
+            share(fileNamed: (body["name"] as? String) ?? "", text: (body["text"] as? String) ?? "")
+        case "activity":
+            let state = (body["state"] as? [String: Any]) ?? [:]
+            Task { @MainActor in LiveActivityController.shared.handle(state) }
+        case "speak":
+            let text = (body["text"] as? String) ?? ""
+            let lang = (body["lang"] as? String) ?? "en-IN"
+            Task { @MainActor in NativeSpeaker.shared.speak(text, language: lang) }
+        case "stopSpeaking":
+            Task { @MainActor in NativeSpeaker.shared.stop() }
+        case "account":
+            let action = (body["action"] as? String) ?? "status"
+            Task { @MainActor in SyncEngine.shared.handle(action: action) }
         default:
             break
+        }
+    }
+
+    // MARK: Share a file (backups)
+
+    private func share(fileNamed rawName: String, text: String) {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_."))
+        var name = String(rawName.unicodeScalars.filter { allowed.contains($0) })
+        name = name.trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        if name.isEmpty { name = "mimi-checklist-backup" }
+        if !name.lowercased().hasSuffix(".json") { name += ".json" }
+
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("MimiShare", isDirectory: true)
+        let url = folder.appendingPathComponent(name)
+        do {
+            try? FileManager.default.removeItem(at: folder)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try Data(text.utf8).write(to: url, options: .atomic)
+        } catch {
+            NSLog("Mimi Checklist: could not prepare the backup file: %@", error.localizedDescription)
+            haptic("warning")
+            return
+        }
+
+        DispatchQueue.main.async {
+            guard let top = UIApplication.shared.mimiTopViewController() else { return }
+            let sheet = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+            if let pop = sheet.popoverPresentationController { // iPad
+                pop.sourceView = top.view
+                pop.sourceRect = CGRect(x: top.view.bounds.midX, y: top.view.bounds.midY, width: 1, height: 1)
+                pop.permittedArrowDirections = []
+            }
+            sheet.completionWithItemsHandler = { _, _, _, _ in try? FileManager.default.removeItem(at: folder) }
+            top.present(sheet, animated: true)
         }
     }
 

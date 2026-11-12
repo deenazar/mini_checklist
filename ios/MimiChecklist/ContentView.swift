@@ -1,8 +1,5 @@
 import SwiftUI
 
-/// The checklist page this app opens.
-let checklistURL = URL(string: "https://claude.ai/artifact/HPnWLxmpMNayHV278scX6m")!
-
 struct ContentView: View {
     @StateObject private var model = WebModel()
 
@@ -10,8 +7,10 @@ struct ContentView: View {
         ZStack {
             Color(uiColor: .systemBackground).ignoresSafeArea()
 
+            // Full screen: the page's sky runs behind the status bar and the Dynamic Island.
+            // (.container only: the keyboard still pushes the page up, so the text box stays visible.)
             ChecklistWebView(model: model)
-                .ignoresSafeArea(.container, edges: .bottom)
+                .ignoresSafeArea(.container)
                 .opacity(model.firstLoadDone ? 1 : 0)
                 .animation(.easeOut(duration: 0.35), value: model.firstLoadDone)
 
@@ -51,10 +50,10 @@ private struct OfflineView: View {
     let retry: () -> Void
     var body: some View {
         VStack(spacing: 14) {
-            Image(systemName: "wifi.exclamationmark")
+            Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 46, weight: .semibold))
                 .foregroundStyle(.secondary)
-            Text("Can’t reach your checklist")
+            Text("Can’t open your checklist")
                 .font(.title3.weight(.bold))
             Text(message)
                 .font(.subheadline)

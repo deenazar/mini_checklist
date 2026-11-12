@@ -11,7 +11,7 @@ import AVFoundation
 final class SpeechBridge: NSObject, WKScriptMessageHandler {
     static let handlerName = "mimiSpeech"
 
-    /// Runs in every frame of the page (the checklist lives in a frame inside claude.ai).
+    /// Runs at the start of the bundled checklist page.
     static let pageScript = #"""
     (function () {
       var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.mimiSpeech;
@@ -74,8 +74,8 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let cmd = body["cmd"] as? String else { return }
-        // Only Claude's own pages may use the microphone.
-        guard TrustedHosts.contains(message.frameInfo.securityOrigin) else { return }
+        // Only the bundled checklist page may use the microphone.
+        guard AppOrigin.isAppPage(message.frameInfo) else { return }
         let id = (body["id"] as? NSNumber)?.intValue ?? 0
         switch cmd {
         case "start":
@@ -135,6 +135,8 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
     }
 
     private func begin(lang: String) {
+        // Mimi stops talking when you start talking.
+        MainActor.assumeIsolated { NativeSpeaker.shared.stop() }
         guard let rec = Self.recognizer(for: lang) else {
             send(["type": "error", "error": "language-not-supported"])
             send(["type": "end"])
@@ -181,7 +183,7 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
                             if self.wantsInterim {
                                 self.send(["type": "result", "text": text, "isFinal": false])
                             }
-                            self.armSilence(seconds: 1.4)
+                            self.armSilence(seconds: 1.8)
                         }
                     } else if error != nil {
                         self.end(sendFinal: true)

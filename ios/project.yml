@@ -1,0 +1,91 @@
+# Mimi Checklist — Xcode project spec for XcodeGen (https://github.com/yonaskolb/XcodeGen).
+# Generate the project on a Mac:   cd ios && xcodegen
+# Then open MimiChecklist.xcodeproj. Your Team and Google client ID go in Config/Local.xcconfig.
+name: MimiChecklist
+options:
+  bundleIdPrefix: com.azarudeen
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+configFiles:
+  Debug: Config/App.xcconfig
+  Release: Config/App.xcconfig
+settings:
+  base:
+    MARKETING_VERSION: "3.1"
+    CURRENT_PROJECT_VERSION: "6"
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  MimiChecklist:
+    type: application
+    platform: iOS
+    sources:
+      - path: MimiChecklist
+        excludes:
+          - "Web/**"
+      # The checklist web app, copied into the app as a folder named "Web".
+      - path: MimiChecklist/Web
+        type: folder
+        buildPhase: resources
+      - path: Shared
+    info:
+      path: MimiChecklist/Info.plist
+      properties:
+        CFBundleDisplayName: Mimi Checklist
+        LSApplicationCategoryType: public.app-category.productivity
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSSupportsLiveActivities: true
+        NSMicrophoneUsageDescription: Mimi listens when you tap the mic or say “Hey Mimi”, so you can add tasks, log water and take notes by voice.
+        NSSpeechRecognitionUsageDescription: Mimi turns what you say into text so she can understand your requests.
+        NSCameraUsageDescription: Take a new profile photo for your checklist.
+        NSPhotoLibraryUsageDescription: Choose a profile photo for your checklist.
+        # Google sign-in (set GOOGLE_CLIENT_ID in Config/Local.xcconfig).
+        MimiGoogleClientID: $(GOOGLE_CLIENT_ID)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    dependencies:
+      - target: MimiWidgets
+  MimiWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: MimiWidgets
+      - path: Shared
+    info:
+      path: MimiWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Mimi
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).widgets
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+schemes:
+  MimiChecklist:
+    build:
+      targets:
+        MimiChecklist: all
+        MimiWidgets: all
+    run:
+      config: Debug
+      executable: MimiChecklist
+    archive:
+      config: Release
