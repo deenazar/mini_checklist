@@ -68,10 +68,37 @@
   }
 
   /** Mimi's artwork with its own SVG ids (so several copies on one page never clash). */
-  function catSVG(id) {
-    return CAT.replace(/mwHead/g, 'mwHead-' + id).replace(/mwFur/g, 'mwFur-' + id);
+  // "Me as Mimi": the person's own face (a cartoon-styled photo) in Mimi's head, with her ears and whiskers.
+  var ME_KEY = 'mimi-me', ME_ON = 'mimi-me-on';
+  function meFace() {
+    try { return localStorage.getItem(ME_ON) === '1' ? localStorage.getItem(ME_KEY) : null; } catch (e) { return null; }
   }
-  window.MimiArt = { cat: catSVG };
+  function catSVG(id, face) {
+    if (face === undefined) face = meFace();
+    var s = CAT.replace(/mwHead/g, 'mwHead-' + id).replace(/mwFur/g, 'mwFur-' + id);
+    if (!face || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(face)) return s;
+    var photo = '<image class="mw-me-face" href="' + face + '" x="32" y="26" width="96" height="80" preserveAspectRatio="xMidYMid slice" clip-path="url(#mwHead-' + id + ')"/>';
+    return s.replace('class="mw-cat"', 'class="mw-cat mw-me"')
+      .replace('<g clip-path="url(#mwHead-' + id + ')">', photo + '<g class="mw-patch" clip-path="url(#mwHead-' + id + ')">');
+  }
+  var meListeners = [];
+  window.MimiArt = {
+    cat: catSVG,
+    face: function () { try { return localStorage.getItem(ME_KEY); } catch (e) { return null; } },
+    isMe: function () { return !!meFace(); },
+    /** Save (or clear with null) the person's Mimi face and whether to use it, then redraw every Mimi. */
+    setMe: function (dataUrl, on) {
+      try {
+        if (dataUrl === null) { localStorage.removeItem(ME_KEY); localStorage.removeItem(ME_ON); }
+        else {
+          if (dataUrl) localStorage.setItem(ME_KEY, dataUrl);
+          localStorage.setItem(ME_ON, on ? '1' : '0');
+        }
+      } catch (e) {}
+      meListeners.forEach(function (f) { try { f(); } catch (e) {} });
+    },
+    onChange: function (f) { meListeners.push(f); }
+  };
 
   window.MimiWorld = function (opts) {
     var stage = opts.stage, bub = opts.bubble, B = opts.B || function () { return ''; };
@@ -106,6 +133,7 @@
     zz.setAttribute('aria-hidden', 'true');
     var shadow = el('i', 'mw-shadow');
     var figure = el('div', 'mw-figure', catSVG('header'));
+    window.MimiArt.onChange(function () { figure.innerHTML = catSVG('header'); });
     var halo = el('i', 'mw-halo'); // the sun by day, the moon by night, behind Mimi
     mimi.append(halo, shadow, ring, orbit, figure, zz);
     var week = el('div', 'mw-week');

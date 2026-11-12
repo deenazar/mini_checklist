@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="mimi-world.css">
 <link rel="stylesheet" href="landing.css">
 <link rel="stylesheet" href="upcoming.css">
+<link rel="stylesheet" href="play.css">
 </head>
 <body>
 <div class="app">
@@ -31,6 +32,7 @@
       <div class="date"><span class="num" id="dNum">–</span><span class="rest"><span class="wd" id="dWd">Loading</span><span class="mo" id="dMo"></span></span></div>
       <div class="btns">
         <button class="g" id="todayBtn" type="button" hidden>Today</button>
+        <button class="g" id="roomBtn" type="button" aria-label="Mimi’s room"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/></svg><span class="lbl">Room</span></button>
         <button class="g" id="notesBtn" type="button" aria-label="Notes"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">Notes</span></button>
         <button class="g" id="waterBtn" type="button" aria-pressed="true" aria-label="Hide water tracker"><svg viewBox="0 0 24 24"><path d="M12 2.5C9 6.5 5.5 10.6 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10.6 15 6.5 12 2.5z"/></svg><span class="lbl">Water</span></button>
         <button class="g" id="metricBtn" type="button" aria-label="Show focus time"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span class="lbl" id="metricLbl">Focus</span></button>
@@ -255,6 +257,7 @@
 <script src="account-ui.js"></script>
 <script src="extras-ui.js"></script>
 <script src="upcoming.js"></script>
+<script src="play.js"></script>
 <script src="landing.js"></script>
 </body>
 </html>

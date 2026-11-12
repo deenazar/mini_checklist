@@ -30,9 +30,8 @@
   grp.appendChild(h);
   var rows = document.createElement('div');
   grp.appendChild(rows);
-  var backup = document.getElementById('sBackupGrp');
-  var note = body.querySelector(':scope > p.wnote');
-  body.insertBefore(grp, backup || note || null);
+  // First in Settings, so signing in and out is easy to find.
+  body.insertBefore(grp, body.firstElementChild);
 
   function row(label, sub, onClick, cls) {
     var b = document.createElement(onClick ? 'button' : 'div');

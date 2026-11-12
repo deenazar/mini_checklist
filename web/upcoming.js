@@ -7,6 +7,18 @@
 
   // Small vector illustrations (320×240), animated with CSS (upcoming.css).
   var ART = {
+    passwords:
+      '<svg viewBox="0 0 320 240" aria-hidden="true">' +
+      '<circle cx="160" cy="122" r="86" fill="#fff" opacity=".45"/>' +
+      '<g class="s-f1"><path d="M160 34 L222 58 V112 C222 154 196 184 160 198 C124 184 98 154 98 112 V58 Z" fill="#2CC4BE" stroke="#2A2420" stroke-width="4" stroke-linejoin="round"/>' +
+      '<path d="M160 52 L206 70 V112 C206 144 188 168 160 180" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".45"/>' +
+      '<rect x="134" y="104" width="52" height="42" rx="10" fill="#FFC24D" stroke="#2A2420" stroke-width="4"/>' +
+      '<path d="M144 104 V92 a16 16 0 0 1 32 0 V104" fill="none" stroke="#2A2420" stroke-width="5"/>' +
+      '<circle cx="160" cy="122" r="5" fill="#2A2420"/><path d="M160 126 V134" stroke="#2A2420" stroke-width="4" stroke-linecap="round"/></g>' +
+      '<g class="s-f2"><rect x="214" y="150" width="96" height="34" rx="12" fill="#fff" stroke="#2A2420" stroke-width="3"/>' +
+      '<g fill="#2A2420"><circle cx="232" cy="167" r="4"/><circle cx="246" cy="167" r="4"/><circle cx="260" cy="167" r="4"/><circle cx="274" cy="167" r="4"/><circle cx="288" cy="167" r="4"/></g></g>' +
+      '<g class="s-f3"><circle cx="58" cy="76" r="18" fill="#FF6B4A" stroke="#2A2420" stroke-width="3.5"/><path d="M72 88 L104 120 M92 108 L100 100 M98 114 L106 106" stroke="#2A2420" stroke-width="5" stroke-linecap="round"/><circle cx="58" cy="76" r="6" fill="#fff"/></g>' +
+      '<g class="s-tw" fill="#8B5CF6"><path d="M250 50l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="M60 180l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></g></svg>',
     reminders:
       '<svg viewBox="0 0 320 240" aria-hidden="true">' +
       '<circle cx="160" cy="122" r="86" fill="#fff" opacity=".45"/><circle cx="160" cy="122" r="62" fill="#fff" opacity=".5"/>' +
@@ -58,6 +70,10 @@
       icon: '⏰', bg: 'linear-gradient(160deg,#FFE7D6,#FFD3E2)', accent: '#FF6B4A',
       about: 'Reminders that fit your day, not the other way around.',
       points: ['Snooze or mark a task done right from the notification', 'Repeat reminders: every day, weekdays, or your own pattern', 'A gentle morning heads-up with what’s planned today'] },
+    { id: 'passwords', title: 'Password manager', line: 'Your logins, locked tight',
+      icon: '🔐', bg: 'linear-gradient(160deg,#D8F5F3,#E4ECFF)', accent: '#0E9F9A',
+      about: 'Keep your passwords safe with Mimi, locked with one master password.',
+      points: ['Save logins and copy them with one tap', 'Encrypted on your iPhone before anything is stored', 'Strong password generator and a quick search'] },
     { id: 'ai', title: 'AI features', line: 'Mimi plans with you',
       icon: '✨', bg: 'linear-gradient(160deg,#ECE4FF,#D8F4F2)', accent: '#8B5CF6',
       about: 'Mimi gets smarter about your day, and helps you plan it.',
