@@ -10,6 +10,17 @@
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const istHour=()=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()).split(':');return (+p[0]%24)+(+p[1])/60;};
   const CHECK='<svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+  // Empty day: Mimi peeking over a blank checklist card.
+  const EMPTY_ART='<svg viewBox="0 0 160 110"><ellipse cx="80" cy="104" rx="52" ry="5" fill="currentColor" opacity=".08"/>'+
+    '<g class="ea-card"><rect x="38" y="38" width="84" height="62" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="2.5"/>'+
+    '<rect x="50" y="54" width="10" height="10" rx="3" fill="none" stroke="var(--teal)" stroke-width="2.5"/><rect x="66" y="56" width="42" height="6" rx="3" fill="var(--fill)"/>'+
+    '<rect x="50" y="74" width="10" height="10" rx="3" fill="none" stroke="var(--coral)" stroke-width="2.5"/><rect x="66" y="76" width="30" height="6" rx="3" fill="var(--fill)"/></g>'+
+    '<g class="ea-cat"><path d="M56 40 L58 14 L74 28 Z M104 40 L102 14 L86 28 Z" fill="#FFF3E6" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>'+
+    '<path d="M102 16 L88 28 L101 34 Z" fill="#FF9F6E"/><path d="M52 44 Q52 22 80 22 Q108 22 108 44 Z" fill="#FFF3E6" stroke="#2A2420" stroke-width="2.5" stroke-linejoin="round"/>'+
+    '<g class="ea-eyes"><ellipse cx="70" cy="36" rx="4" ry="5" fill="#2A2420"/><ellipse cx="90" cy="36" rx="4" ry="5" fill="#2A2420"/><circle cx="71.5" cy="34" r="1.4" fill="#fff"/><circle cx="91.5" cy="34" r="1.4" fill="#fff"/></g>'+
+    '<path d="M46 44 h68" stroke="#2A2420" stroke-width="2.5" stroke-linecap="round"/>'+
+    '<g fill="#FFF3E6" stroke="#2A2420" stroke-width="2.5"><ellipse cx="64" cy="44" rx="7" ry="5"/><ellipse cx="96" cy="44" rx="7" ry="5"/></g></g>'+
+    '<g class="ea-spark" fill="#FFC24D"><path d="M132 22l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M28 30l1.5 3.5 3.5 1.5-3.5 1.5-1.5 3.5-1.5-3.5-3.5-1.5 3.5-1.5z"/></g></svg>';
   const PLAY='<path d="M3 1.5v10l8.5-5z"/>', PAUSE='<rect x="2" y="1.5" width="3.2" height="10" rx="1"/><rect x="7.8" y="1.5" width="3.2" height="10" rx="1"/>';
   const DOTS='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   const minLabel=m=>m>=60?(m%60?(m/60).toFixed(1).replace('.0','')+' hr':(m/60)+' hr'):m+' min';
@@ -53,14 +64,17 @@
     for(const r of pref){ const v=vs.find(x=>r.test(x.name)); if(v){ mimiVoice=v; return; } } mimiVoice=vs[0]; }
   if(hasSynth){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
   function setSpeaking(v){ speaking=v; const b=$('voiceBtn'); b.hidden=!v; b.classList.toggle('speaking',v); $('voiceLbl').textContent=v?'Stop':'Voice'; b.setAttribute('aria-label',v?'Stop Mimi talking':(voiceOn?'Turn Mimi’s voice off':'Turn Mimi’s voice on')); }
-  function synth(text,lg){ if(!hasSynth) return; lg=lg||'en'; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); const vv=voiceFor(lg); if(vv){u.voice=vv;u.lang=vv.lang;} else u.lang=LOC[lg]||'en-IN';
-    u.pitch=lg==='en'?1.35:1.15; u.rate=1.03; u.onstart=()=>setSpeaking(true); u.onend=u.onerror=()=>setSpeaking(false); speechSynthesis.speak(u); }catch(e){} }
+  // In the iPhone app: iOS's own voices (the most natural one installed for the language).
+  const NV=window.mimiNative&&typeof window.mimiNative.speak==='function'?window.mimiNative:null;
+  window.__mimiSpeaking=v=>setSpeaking(!!v);
+  function synth(text,lg){ lg=lg||'en'; if(NV){ try{ NV.speak(text,LOC[lg]||'en-IN'); }catch(e){} return; } if(!hasSynth) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); const vv=voiceFor(lg); if(vv){u.voice=vv;u.lang=vv.lang;} else u.lang=LOC[lg]||'en-IN';
+    u.pitch=lg==='en'?1.08:1.04; u.rate=1; u.onstart=()=>setSpeaking(true); u.onend=u.onerror=()=>setSpeaking(false); speechSynthesis.speak(u); }catch(e){} }
   function speak(text){ if(!voiceOn||!text) return; const lg=detectLang(text)||curLang();
     if(tts){ tts.speak(text,{voice:mimiStyle,language:lg}).catch(e=>{ if(e&&/not_granted|unavailable|rate_limited|busy/.test(e.code||'')) synth(text,lg); }); return; }
     synth(text,lg); }
   function voiceFor(lg){ if(!hasSynth) return null; const vs=speechSynthesis.getVoices(); if(lg==='en') return mimiVoice;
     return vs.find(v=>v.lang.replace('_','-').toLowerCase()===LOC[lg].toLowerCase())||vs.find(v=>v.lang.toLowerCase().startsWith(lg))||null; }
-  function hush(){ try{ tts&&tts.stop(); }catch(e){} if(hasSynth) speechSynthesis.cancel(); setSpeaking(false); }
+  function hush(){ try{ tts&&tts.stop(); }catch(e){} try{ NV&&NV.stopSpeaking(); }catch(e){} if(hasSynth) speechSynthesis.cancel(); setSpeaking(false); }
   function paintVoice(){ $('voiceBtn').classList.toggle('off',!voiceOn); $('voiceBtn').setAttribute('aria-pressed',String(voiceOn)); setSpeaking(speaking); }
   $('voiceBtn').addEventListener('click',()=>{ if(speaking){ hush(); return; }
     voiceOn=!voiceOn; try{localStorage.setItem('dc-voice',voiceOn?'on':'off');}catch(e){} paintVoice(); sfx.tap();
@@ -153,218 +167,8 @@
   let toastT=0;
   function toast(m,err){ const t=$('toast'); t.textContent=m; t.classList.toggle('err',!!err); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),err?5000:2400); }
 
-  /* ---------- The 3D island ---------- */
-  const world=(function(){
-    const stage=$('stage'), bub=$('bubble'), plabs=$('plabs');
-    let bubT=0, bubOn=false;
-    const api={ say(t,ms){ bub.textContent=t; bub.classList.add('show'); bubOn=true; clearTimeout(bubT); bubT=setTimeout(()=>{bub.classList.remove('show');bubOn=false;},ms||2600); },
-      react(){}, double(){}, focus(){}, setWeek(){}, setDone(){}, setTimer(){}, look(){}, type(){}, poke(){}, onPick:null };
-    const pl=[]; for(let i=0;i<7;i++){ const b=document.createElement('button'); b.type='button'; b.className='plab'; b.innerHTML='<b></b><span></span>';
-      b.addEventListener('click',()=>api.onPick&&api.onPick(i)); plabs.append(b); pl.push(b); }
-    function fallback(){ stage.classList.add('nogl');
-      api.setWeek=(items)=>{ const fb=$('fb'); fb.textContent=''; items.forEach((it,i)=>{ const x=document.createElement('i'); x.style.height=Math.max(4,it.v*100)+'%'; if(it.today) x.style.background='#B8F5D0'; fb.append(x);
-        const b=pl[i]; b.querySelector('b').textContent=it.val; b.querySelector('span').textContent=it.lab; b.classList.toggle('sel',it.sel); b.setAttribute('aria-label',it.aria);
-        b.style.transform='translate('+((stage.clientWidth/2)+(i-3)*32-16)+'px,'+(stage.clientHeight-58)+'px)'; }); };
-      api.say=t=>{ toast(t); };
-      return api; }
-    if(!window.THREE) return fallback();
-    let R; try{ R=new THREE.WebGLRenderer({antialias:true,powerPreference:'low-power'}); }catch(e){ return fallback(); }
-    R.setPixelRatio(Math.min(devicePixelRatio||1,2)); R.shadowMap.enabled=true; R.shadowMap.type=THREE.PCFSoftShadowMap;
-    stage.prepend(R.domElement); R.domElement.setAttribute('aria-hidden','true');
-    const scene=new THREE.Scene(); scene.fog=new THREE.Fog(0xffffff,16,34);
-    const cam=new THREE.PerspectiveCamera(36,1,.1,100);
-    const C=c=>new THREE.Color(c);
-    const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.8,metalness:0,flatShading:true},o||{}));
-
-    const skyU={top:{value:C('#3C5BA8')},bot:{value:C('#F7A07A')}};
-    const sky=new THREE.Mesh(new THREE.SphereGeometry(40,32,16),new THREE.ShaderMaterial({uniforms:skyU,side:THREE.BackSide,depthWrite:false,fog:false,
-      vertexShader:'varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-      fragmentShader:'uniform vec3 top;uniform vec3 bot;varying vec3 p;void main(){float h=clamp(p.y*1.4+.25,0.,1.);gl_FragColor=vec4(mix(bot,top,pow(h,.8)),1.);}'}));
-    scene.add(sky);
-    const starG=new THREE.BufferGeometry(), sp=[]; for(let i=0;i<350;i++){ const u=Math.random()*Math.PI*2, v=Math.random()*.9+.1; sp.push(Math.cos(u)*30*Math.sqrt(1-v*v),v*30,Math.sin(u)*30*Math.sqrt(1-v*v)); }
-    starG.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
-    const starM=new THREE.PointsMaterial({color:0xffffff,size:.16,transparent:true,opacity:0,fog:false}); scene.add(new THREE.Points(starG,starM));
-
-    const hemi=new THREE.HemisphereLight(0xffffff,0x5a6a5a,.8); scene.add(hemi);
-    const sun=new THREE.DirectionalLight(0xffffff,1); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024);
-    Object.assign(sun.shadow.camera,{left:-5,right:5,top:5,bottom:-5,near:1,far:30}); scene.add(sun,sun.target);
-    const orb=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),new THREE.MeshBasicMaterial({color:0xFFE6A0,fog:false})); scene.add(orb);
-
-    const island=new THREE.Group(); scene.add(island);
-    const grass=new THREE.Mesh(new THREE.CylinderGeometry(3.1,3,.35,10,1),M('#7CC46A')); grass.position.y=-.18; grass.receiveShadow=true; island.add(grass);
-    const dirt=new THREE.Mesh(new THREE.CylinderGeometry(3,2.6,.5,10,1),M('#A9764F')); dirt.position.y=-.6; island.add(dirt);
-    const rock=new THREE.Mesh(new THREE.ConeGeometry(2.6,2.6,10,2),M('#7A5A48')); rock.rotation.x=Math.PI; rock.position.y=-2.15; island.add(rock);
-    for(let i=0;i<5;i++){ const s=new THREE.Mesh(new THREE.DodecahedronGeometry(.18+Math.random()*.15),M('#9AA3A0')); const a=i*1.3+.5; s.position.set(Math.cos(a)*2.55,.02,Math.sin(a)*2.55); s.castShadow=true; island.add(s); }
-    const tree=(x,z,s)=>{ const g=new THREE.Group(); const tr=new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,.5,6),M('#7A5236')); tr.position.y=.25; g.add(tr);
-      const c1=new THREE.Mesh(new THREE.ConeGeometry(.45,.8,7),M('#2F8F5B')); c1.position.y=.8; const c2=new THREE.Mesh(new THREE.ConeGeometry(.34,.6,7),M('#3BA86A')); c2.position.y=1.15;
-      g.add(c1,c2); g.children.forEach(m=>m.castShadow=true); g.position.set(x,0,z); g.scale.setScalar(s); island.add(g); return g; };
-    const trees=[tree(-2.35,.3,1.05),tree(-2.1,-.7,.8),tree(2.4,.2,.95)];
-    const lamp=new THREE.Group(); lamp.position.set(1.75,0,1.3); island.add(lamp);
-    const post=new THREE.Mesh(new THREE.CylinderGeometry(.04,.05,1,6),M('#2D3A40')); post.position.y=.5; post.castShadow=true; lamp.add(post);
-    const bulbM=new THREE.MeshStandardMaterial({color:0xFFF2C0,emissive:0xFFC85A,emissiveIntensity:0}); const bulb=new THREE.Mesh(new THREE.SphereGeometry(.12,16,12),bulbM); bulb.position.y=1.05; lamp.add(bulb);
-    const lampLight=new THREE.PointLight(0xFFC070,0,5,2); lampLight.position.y=1.05; lamp.add(lampLight);
-    const clouds=[]; for(let i=0;i<4;i++){ const g=new THREE.Group(); for(let j=0;j<4;j++){ const s=new THREE.Mesh(new THREE.SphereGeometry(.5+Math.random()*.4,10,8),new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,transparent:true,opacity:.92,flatShading:true})); s.position.set(j*.6,Math.random()*.25,Math.random()*.3); g.add(s); }
-      g.position.set(-12+i*7,3+Math.random()*2,-8-Math.random()*6); g.userData.v=.15+Math.random()*.2; scene.add(g); clouds.push(g); }
-
-    const pillars=[]; const pillarG=new THREE.BoxGeometry(.46,1,.46);
-    for(let i=0;i<7;i++){ const a=-1.15+i*(2.3/6); const m=new THREE.Mesh(pillarG,new THREE.MeshStandardMaterial({color:0xFF6B4A,roughness:.45,metalness:.05,flatShading:true}));
-      m.position.set(Math.sin(a)*2.05,0,-Math.cos(a)*1.55+.15); m.castShadow=true; m.userData={i,h:.04,target:.04}; m.scale.y=.04; island.add(m); pillars.push(m); }
-    const selRing=new THREE.Mesh(new THREE.RingGeometry(.38,.46,32),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.95})); selRing.rotation.x=-Math.PI/2; selRing.position.y=.012; island.add(selRing);
-
-    const mimi=new THREE.Group(); mimi.position.set(0,0,.85); island.add(mimi);
-    const cat=new THREE.Group(); cat.scale.setScalar(.62); cat.position.y=.74; mimi.add(cat);
-    const SM=c=>new THREE.MeshStandardMaterial({color:c,roughness:.6});
-    const fur=SM(0xFFF6EE), patch=SM(0xFF9F6E), pink=SM(0xFF8FA8), dark=SM(0x1F2226), scarf=SM(0x0E9F9A), white=new THREE.MeshBasicMaterial({color:0xffffff});
-    const S=(r,m,x,y,z,sx,sy,sz)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,28,20),m);o.position.set(x,y,z);o.scale.set(sx||1,sy||1,sz||1);o.castShadow=true;return o;};
-    const bodyG=new THREE.Group(); cat.add(bodyG);
-    bodyG.add(S(.6,fur,0,-.66,0,1,.92,.92), S(.32,patch,-.25,-.5,-.32,1,1,.8));
-    bodyG.add(S(.16,fur,-.26,-1.1,.38,1,.75,1.1), S(.16,fur,.26,-1.1,.38,1,.75,1.1));
-    const armL=S(.13,fur,-.5,-.6,.25,1,1.4,1), armR=S(.13,fur,.5,-.6,.25,1,1.4,1); bodyG.add(armL,armR);
-    const tail=new THREE.Group(); tail.position.set(.35,-.95,-.4); bodyG.add(tail);
-    const tseg=[]; for(let i=0;i<6;i++){ const s=S(.09-i*.006,i>3?patch:fur,0,0,0); tail.add(s); tseg.push(s); }
-    const sc=new THREE.Mesh(new THREE.TorusGeometry(.36,.08,10,28),scarf); sc.rotation.x=Math.PI/2-.12; sc.position.y=-.18; bodyG.add(sc);
-    const scTail=S(.1,scarf,.22,-.38,.32,.8,1.6,.5); scTail.rotation.z=.3; bodyG.add(scTail);
-    const head=new THREE.Group(); head.position.y=.2; cat.add(head);
-    head.add(S(.6,fur,0,0,0,1.1,.95,.95), S(.3,patch,.3,.25,.25,1,.8,.6));
-    const ear=(sx,m)=>{const g=new THREE.Group(); const o=new THREE.Mesh(new THREE.ConeGeometry(.21,.38,20),m); const i2=new THREE.Mesh(new THREE.ConeGeometry(.12,.24,16),pink); i2.position.set(0,-.03,.08); o.castShadow=true; g.add(o,i2); g.position.set(sx*.37,.52,0); g.rotation.z=-sx*.38; return g;};
-    const earL=ear(-1,fur), earR=ear(1,patch); head.add(earL,earR);
-    head.add(S(.24,fur,0,-.17,.46,1.25,.78,.7), S(.05,pink,0,-.07,.62,1.3,.8,1));
-    const mouth=new THREE.Mesh(new THREE.TorusGeometry(.05,.012,8,16,Math.PI),dark); mouth.position.set(0,-.17,.62); mouth.rotation.z=Math.PI; head.add(mouth);
-    const eye=x=>{const g=new THREE.Group(); g.add(S(.095,dark,0,0,0,1,1.18,.6), S(.032,white,.03,.045,.055), S(.014,white,-.025,-.03,.055)); g.position.set(x,.05,.53); return g;};
-    const eL=eye(-.23), eR=eye(.23); head.add(eL,eR);
-    head.add(S(.085,pink,-.38,-.12,.42,1,.55,.4), S(.085,pink,.38,-.12,.42,1,.55,.4));
-    for(const sx of [-1,1]) for(const dy of [-.03,.04]){ const w=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.3,6),dark); w.rotation.z=Math.PI/2+sx*dy*3; w.position.set(sx*.44,-.15+dy,.42); head.add(w); }
-    const tTrack=new THREE.Mesh(new THREE.RingGeometry(.58,.66,64),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35})); tTrack.rotation.x=-Math.PI/2; tTrack.position.y=.01; tTrack.visible=false; mimi.add(tTrack);
-    const tFillM=new THREE.MeshBasicMaterial({color:0xFF6B4A}); let tFill=null;
-    const orbs=[]; const orbG=new THREE.SphereGeometry(.11,14,10);
-    const orbCols=[0xFF6B4A,0x2CC4BE,0xFFC24D,0x8ED85A,0xB59CFF];
-
-    let yaw=0, yawV=0, drag=null, autoT=0;
-    const target=new THREE.Vector3(0,.55,0);
-    function placeCam(){ const narrow=stage.clientWidth<520; const dist=narrow?9.6:8.2, pitch=.36; cam.fov=narrow?40:34;
-      cam.position.set(Math.sin(yaw)*Math.cos(pitch)*dist, target.y+Math.sin(pitch)*dist, Math.cos(yaw)*Math.cos(pitch)*dist); cam.lookAt(target.x,target.y+(narrow?.3:-.05),target.z); /* phones: aim higher so the island and its day labels sit below the date */ cam.updateProjectionMatrix(); }
-    function size(){ const w=stage.clientWidth,h=stage.clientHeight; R.setSize(w,h,false); cam.aspect=w/h; placeCam(); }
-    new ResizeObserver(size).observe(stage); size();
-
-    const ray=new THREE.Raycaster(), ndc=new THREE.Vector2(), cv=R.domElement;
-    cv.addEventListener('pointerdown',e=>{ drag={last:e.clientX,moved:0}; });
-    cv.addEventListener('pointermove',e=>{ if(!drag) return; const dx=e.clientX-drag.last; drag.last=e.clientX; drag.moved+=Math.abs(dx);
-      if(drag.moved>6){ yaw=Math.max(-.9,Math.min(.9,yaw-dx*.006)); yawV=-dx*.006; autoT=performance.now()+4000; } });
-    cv.addEventListener('pointerup',e=>{ if(!drag) return; const tap=drag.moved<6; drag=null; if(!tap) return;
-      const r=cv.getBoundingClientRect(); ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1); ray.setFromCamera(ndc,cam);
-      const hit=ray.intersectObjects([...pillars,cat],true)[0]; if(!hit) return;
-      let o=hit.object; while(o&&o!==cat&&!pillars.includes(o)) o=o.parent;
-      if(o===cat){ const now=performance.now(); if(now-lastCatTap<320){ clearTimeout(catT); lastCatTap=0; api.double(); } else { lastCatTap=now; catT=setTimeout(()=>api.poke(),300); } }
-      else if(o&&api.onPick) api.onPick(o.userData.i); });
-    let lastCatTap=0, catT=0;
-    cv.addEventListener('pointercancel',()=>{drag=null;});
-
-    let look={x:0,y:0}, tgt={x:0,y:0}, anim=null, blinkAt=performance.now()+2000, sleepy=false, focus=false, typing=0, lastAct=performance.now(), spin=0;
-    const wake=()=>{ lastAct=performance.now(); sleepy=false; };
-    const lookAtPoint=(x,y)=>{ const r=stage.getBoundingClientRect(); tgt.x=Math.max(-1,Math.min(1,(x-(r.left+r.width/2))/(r.width/2))); tgt.y=Math.max(-1,Math.min(1,(y-(r.top+r.height*.6))/r.height)); };
-    addEventListener('pointermove',e=>{ lookAtPoint(e.clientX,e.clientY); wake(); },{passive:true});
-    addEventListener('pointerdown',wake,{passive:true}); addEventListener('keydown',wake);
-    const play=(type,dur)=>{ anim={type,t0:performance.now(),dur:dur||900}; };
-
-    const KEYS=[[0,'#0B1033','#232A5E',.15],[5,'#1D2557','#5A4F8F',.25],[6.3,'#4A64B4','#FFA27E',.6],[8,'#4F9BF2','#CFE8FF',1],[16,'#4F9BF2','#D8ECFF',1],[17.6,'#3E5AAE','#FF9A6B',.65],[19,'#1A2156','#6B4C8F',.3],[20.5,'#0B1033','#232A5E',.15],[24,'#0B1033','#232A5E',.15]];
-    function applySky(){ const h=istHour(); let a=KEYS[0],b=KEYS[1]; for(let i=0;i<KEYS.length-1;i++) if(h>=KEYS[i][0]&&h<KEYS[i+1][0]){a=KEYS[i];b=KEYS[i+1];}
-      const f=(h-a[0])/(b[0]-a[0]); skyU.top.value.copy(C(a[1]).lerp(C(b[1]),f)); skyU.bot.value.copy(C(a[2]).lerp(C(b[2]),f));
-      const light=a[3]+(b[3]-a[3])*f, night=1-Math.min(1,Math.max(0,(light-.15)/.6));
-      scene.fog.color.copy(skyU.bot.value);
-      const day=h>=6&&h<=18, sa=day?((h-6)/12)*Math.PI:(((h<6?h+24:h)-18)/12)*Math.PI;
-      orb.position.set(Math.cos(sa)*-16,Math.max(1.5,Math.sin(sa)*12),-14); orb.scale.setScalar(day?1.3:.8); orb.material.color.set(day?0xFFE6A0:0xE8ECFF);
-      sun.position.copy(orb.position).multiplyScalar(.5); sun.position.y=Math.max(4,sun.position.y);
-      sun.intensity=.35+light*.85; sun.color.set(day?0xFFF2DD:0xB8C6FF); hemi.intensity=.35+light*.6; hemi.color.set(day?0xffffff:0x9FB0FF);
-      starM.opacity=night*.9; bulbM.emissiveIntensity=night*1.6; lampLight.intensity=night*1.4;
-      stage.style.background='linear-gradient(#'+skyU.top.value.getHexString()+',#'+skyU.bot.value.getHexString()+')'; }
-    applySky(); setInterval(applySky,30000);
-
-    const v3=new THREE.Vector3();
-    let running=true; document.addEventListener('visibilitychange',()=>{ running=!document.hidden; if(running){ last=performance.now(); requestAnimationFrame(frame);} });
-    let last=performance.now();
-    function frame(now){
-      if(!running) return;
-      const dt=Math.min(.05,(now-last)/1000); last=now; const t=now/1000;
-      if(!drag){ yaw=Math.max(-.9,Math.min(.9,yaw+yawV)); yawV*=.9; if(now>autoT&&!reduce) yaw+=(Math.sin(t*.12)*.22-yaw)*.01; }
-      placeCam();
-      island.position.y=reduce?0:Math.sin(t*.8)*.06;
-      clouds.forEach(c=>{ c.position.x+=c.userData.v*dt; if(c.position.x>16) c.position.x=-16; });
-      trees.forEach((tr,i)=>tr.rotation.z=Math.sin(t*1.2+i)*.03);
-      pillars.forEach(p=>{ p.userData.h+=(p.userData.target-p.userData.h)*.08; p.scale.y=Math.max(.04,p.userData.h); p.position.y=p.scale.y/2; });
-      if(!sleepy&&!focus&&now-lastAct>45000) sleepy=true;
-      let y=0, sq=1, jspin=0, tilt=0, shake=0, wave=0;
-      if(!reduce) y=Math.sin(t*(focus?3.4:2))*(sleepy?.01:.025);
-      if(anim){ const p=(now-anim.t0)/anim.dur; if(p>=1) anim=null; else { const k=anim.type;
-        if(k==='jump'){ y+=Math.sin(p*Math.PI)*.55; jspin=p*Math.PI*2; sq=1+Math.sin(p*Math.PI*2)*.07; wave=1; }
-        else if(k==='hop'){ y+=Math.abs(Math.sin(p*Math.PI*2))*.2; wave=.6; }
-        else if(k==='sad'){ tilt=Math.sin(p*Math.PI)*.35; }
-        else if(k==='shake'){ shake=Math.sin(p*Math.PI*12)*.14*(1-p); y+=Math.abs(Math.sin(p*Math.PI*6))*.08; }
-        else if(k==='nod'){ head.rotation.x=Math.sin(p*Math.PI*3)*.22; }
-        else if(k==='wave'){ wave=1; }
-        else if(k==='dance'){ y+=Math.abs(Math.sin(p*Math.PI*6))*.2; jspin=Math.sin(p*Math.PI*4)*.7; wave=1; } } }
-      spin*=.94;
-      cat.position.y=.74+y; cat.rotation.y=jspin+shake+spin+yaw*.6; cat.scale.set(.62/Math.sqrt(sq),.62*sq,.62/Math.sqrt(sq));
-      look.x+=(tgt.x-look.x)*.08; look.y+=(tgt.y-look.y)*.08;
-      head.rotation.y=look.x*.5; if(!anim||anim.type!=='nod') head.rotation.x=(sleepy?.28:look.y*.35)+tilt+(typing>now?Math.sin(t*14)*.05:0);
-      head.rotation.z=tilt*.5+(sleepy?.15:0);
-      earL.rotation.z=.38+Math.sin(t*3)*.03+(typing>now?Math.sin(t*20)*.12:0); earR.rotation.z=-.38-Math.sin(t*3+1)*.03;
-      armR.position.y=-.6+wave*.35*Math.abs(Math.sin(t*10)); armR.rotation.z=wave*.6;
-      tseg.forEach((s,i)=>{ const a=Math.sin(t*(sleepy?1:3)-i*.5)*.25; s.position.set(Math.sin(a+i*.25)*i*.05,i*.11,-Math.cos(a)*i*.02); });
-      let ey=1; if(sleepy) ey=.1; else if(focus) ey=.72; else if(now>blinkAt){ const b=(now-blinkAt)/140; ey=b<1?Math.abs(1-b*2)*.9+.1:1; if(b>=1) blinkAt=now+2000+Math.random()*3000; }
-      eL.scale.y=eR.scale.y=ey;
-      orbs.forEach(o=>{ const d=o.userData; d.p=Math.min(1,d.p+dt*1.1); const a=t*d.s+d.ph, r=2.9+Math.sin(t*.7+d.ph)*.25;
-        const ox=Math.cos(a)*r, oz=Math.sin(a)*r*.8, oy=1.7+Math.sin(t*1.3+d.ph)*.35, sx=mimi.position.x, sy=1.2, sz=mimi.position.z, e=1-Math.pow(1-d.p,3);
-        if(d.out){ o.scale.setScalar(Math.max(0,1-d.p)); } else { o.position.set(sx+(ox-sx)*e, sy+(oy-sy)*e+Math.sin(e*Math.PI)*1.2, sz+(oz-sz)*e); o.scale.setScalar(.4+e*.6); } });
-      for(let i=orbs.length-1;i>=0;i--) if(orbs[i].userData.out&&orbs[i].userData.p>=1){ island.remove(orbs[i]); orbs.splice(i,1); }
-      R.render(scene,cam);
-      const W=stage.clientWidth, H=stage.clientHeight;
-      // Labels of the far pillars can land on the date and buttons at the top on a phone: hide those.
-      const hudEl=stage.querySelector('.hud.top'), hudB=hudEl?hudEl.offsetTop+hudEl.offsetHeight+4:0;
-      pillars.forEach((p,i)=>{ v3.set(p.position.x,p.scale.y+.28,p.position.z); island.localToWorld(v3); v3.project(cam);
-        const lx=(v3.x*.5+.5)*W, ly=(-v3.y*.5+.5)*H, lh=pl[i].offsetHeight||26, hide=ly-lh<hudB;
-        pl[i].style.transform='translate(calc('+lx.toFixed(1)+'px - 50%),calc('+ly.toFixed(1)+'px - 100%))';
-        if(pl[i].classList.contains('under')!==hide){ pl[i].classList.toggle('under',hide); pl[i].tabIndex=hide?-1:0; } });
-      if(bubOn){ head.getWorldPosition(v3); v3.y+=.55; v3.project(cam); bub.style.transform='translate('+((v3.x*.5+.5)*W-6).toFixed(1)+'px,'+((-v3.y*.5+.5)*H-34).toFixed(1)+'px)'; }
-      requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-    setInterval(()=>{ if(sleepy) api.say('Zzz…',1800); },7000);
-
-    const cTeal=C('#2CC4BE'), cCoral=C('#FF6B4A'), cLow=C('#FFB199'), cZero=C('#C8D2CF');
-    api.setWeek=items=>{ items.forEach((it,i)=>{ const p=pillars[i]; p.userData.target=Math.max(.04,it.v*1.9);
-      p.material.color.copy(it.v<=0?cZero:(it.today?cTeal:cLow.clone().lerp(cCoral,Math.min(1,it.v))));
-      p.material.emissive.set(it.today&&it.v>0?0x0E6F6A:0x000000); p.material.emissiveIntensity=it.today?.35:0;
-      pl[i].querySelector('b').textContent=it.val; pl[i].querySelector('span').textContent=it.lab; pl[i].classList.toggle('sel',it.sel); pl[i].setAttribute('aria-label',it.aria);
-      if(it.sel){ selRing.position.x=p.position.x; selRing.position.z=p.position.z; } }); };
-    api.setDone=n=>{ const alive=orbs.filter(o=>!o.userData.out);
-      if(n>alive.length){ for(let i=alive.length;i<Math.min(n,30);i++){ const o=new THREE.Mesh(orbG,new THREE.MeshBasicMaterial({color:orbCols[i%orbCols.length]}));
-        o.userData={p:0,s:.25+Math.random()*.25,ph:Math.random()*Math.PI*2}; o.position.set(0,1.2,.85); island.add(o); orbs.push(o); } }
-      else if(n<alive.length){ alive.slice(n).forEach(o=>{o.userData.out=true;o.userData.p=0;}); } };
-    let lastFrac=-1;
-    api.setTimer=(frac,over)=>{ tTrack.visible=frac!=null;
-      if(frac==null){ if(tFill){ mimi.remove(tFill); tFill.geometry.dispose(); tFill=null; } lastFrac=-1; return; }
-      const f=Math.max(.02,Math.min(1,frac)); if(Math.abs(f-lastFrac)<.004&&tFill) return; lastFrac=f;
-      if(tFill){ mimi.remove(tFill); tFill.geometry.dispose(); }
-      tFill=new THREE.Mesh(new THREE.RingGeometry(.58,.66,64,1,Math.PI/2,-f*Math.PI*2),tFillM); tFill.rotation.x=-Math.PI/2; tFill.position.y=.014; tFillM.color.set(over?0xE5484D:0xFF6B4A); mimi.add(tFill); };
-    api.react=(k,extra)=>{ wake();
-      if(k==='check'){ play('jump',850); api.say(B('check')); }
-      else if(k==='uncheck'){ play('sad',700); api.say(B('uncheck')); }
-      else if(k==='add'){ play('hop',650); api.say(B('add',extra||null)); }
-      else if(k==='del'){ play('shake',500); api.say(B('del')); }
-      else if(k==='play'){ play('nod',700); api.say(B('play',extra||null)); }
-      else if(k==='pause'){ play('sad',600); api.say(B('pause')); }
-      else if(k==='alarm'){ play('shake',1000); api.say(B('alarm'),3500); }
-      else if(k==='win'){ play('dance',2200); api.say(B('win'),4000); }
-      else if(k==='sad'){ play('sad',600); }
-      else if(k==='hello'){ play('wave',1400); }
-      else if(k==='spin'){ spin=Math.PI*2; }
-      else if(k==='flip'){ play('dance',2400); spin=Math.PI*4; } };
-    api.double=()=>{};
-    api.look=el=>{ if(!el) return; const r=el.getBoundingClientRect(); lookAtPoint(r.left+r.width/2,r.top); };
-    api.focus=v=>{ focus=v; };
-    api.type=()=>{ wake(); typing=performance.now()+500; };
-    return api;
-  })();
+  /* ---------- Mimi's home header: illustrated sky, Mimi, the week (mimi-world.js) ---------- */
+  const world=window.MimiWorld({stage:$('stage'),bubble:$('bubble'),toast,B,istHour,reduce});
   ['check','uncheck','del','pause','alarm','win'].forEach(k=>{ const f=sfx[k]; sfx[k]=()=>{ f(); world.react(k); }; });
 
   /* ---------- State ---------- */
@@ -380,7 +184,7 @@
   const focusMs=k=>live(tasksFor(k)).reduce((a,t)=>a+elapsed(t),0);
   const clock=ms=>{const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0');};
 
-  /* ---------- Week (3D pillars) ---------- */
+  /* ---------- Week chart ---------- */
   function renderWeek(){
     const t=todayKey(), keys=[]; for(let i=6;i>=0;i--) keys.push(shift(weekEnd,-i));
     const vals=keys.map(k=>metric==='done'?stats(tasksFor(k)).pct:Math.round(focusMs(k)/60000));
@@ -406,7 +210,10 @@
 
   /* ---------- Render ---------- */
   let wasFull=null, lastListDay=null;
+  let cascadeDay=null, cascadeT=0;
   function render(){
+    // A new day on screen: let its tasks cascade in (only on day changes, not every update).
+    if(cascadeDay!==current&&!reduce){ cascadeDay=current; const L0=$('list'); L0.classList.remove('cascade'); void L0.offsetWidth; L0.classList.add('cascade'); clearTimeout(cascadeT); cascadeT=setTimeout(()=>L0.classList.remove('cascade'),900); }
     const t=todayKey(), diff=Math.round((fromKey(current)-fromKey(t))/864e5);
     if(current>weekEnd||current<=shift(weekEnd,-7)) weekEnd=current;
     $('dNum').textContent=fmt(current,{day:'numeric'});
@@ -431,9 +238,10 @@
     list.textContent='';
     if(!tasks.length){
       const e=document.createElement('div'); e.className='empty';
+      const art=document.createElement('div'); art.className='empty-art'; art.setAttribute('aria-hidden','true'); art.innerHTML=EMPTY_ART;
       const st=document.createElement('strong'); st.textContent=diff<0?'Nothing here':'Nothing planned yet';
-      const p=document.createElement('p'); p.textContent=diff>=0?'Add a task above. Tap the ring to start its timer. Double-tap a task, or swipe right, to finish it; swipe left to delete. Every finished task becomes a light orbiting Mimi’s island.':'No tasks were saved for this day.';
-      e.append(st,p); list.append(e);
+      const p=document.createElement('p'); p.textContent=diff>=0?'Add a task above. Tap the ring to start its timer. Double-tap a task, or swipe right, to finish it; swipe left to delete. Every finished task becomes a star around Mimi.':'No tasks were saved for this day.';
+      e.append(art,st,p); list.append(e);
     }
     renderFilters(tasks);
     const vis=fcat==='all'?tasks:tasks.filter(x=>catOf(x).k===fcat);
@@ -684,6 +492,8 @@
   $('addForm').addEventListener('submit',async e=>{
     e.preventDefault();
     const v=$('newTask').value.replace(/\s+/g,' ').trim(), est=Number($('newMin').value)||0, isDaily=daily, cat=$('newCat').value, at=$('newAt').value, before=Number($('newBefore').value)||0;
+    // Nothing typed yet: just put the cursor in the box (no error, no red border).
+    if(!v){ clearAddError(); $('newTask').value=''; $('newTask').focus(); world.say('Type your task here ✏️',2200); return; }
     { const bad=checkTask({text:v,est,at,before,cat,k:current}); if(bad){ addError(bad.msg,bad.field); return; } clearAddError(); }
     try{ localStorage.setItem('dc-cat',cat); }catch(_){}
     setRem(false); $('newAt').value='';
@@ -727,6 +537,8 @@
     world.react('sad'); world.say(short(msg,34),3200); tone(220,.18,'square',.03); }
   function clearAddError(){ $('addErr').textContent=''; ['newTask','newAt','newMin','newCat'].forEach(i=>$(i).classList.remove('bad')); $('addForm').classList.remove('bad'); }
   ['newTask','newAt','newMin','newCat','newBefore'].forEach(i=>$(i).addEventListener('input',clearAddError));
+  // Tapping anywhere on the add card (not a button or picker) opens the keyboard on the task box.
+  $('addForm').addEventListener('click',e=>{ if(e.target.closest('button,select,input,label,a')) return; $('newTask').focus(); });
   function planWarn(k){ const plan=counted(tasksFor(k)).reduce((a,x)=>a+(x.est||0),0); if(plan>12*60) toast('Heads up: '+hm(plan*60000)+' planned on this day.'); }
 
   /* reminder row in the add box */

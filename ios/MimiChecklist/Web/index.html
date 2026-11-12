@@ -12,11 +12,12 @@
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="stylesheet" href="vendor/fonts/fonts.css">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="mimi-world.css">
 <link rel="stylesheet" href="landing.css">
 </head>
 <body>
 <div class="app">
-  <section class="stage" id="stage" aria-label="Your week on Mimi's island">
+  <section class="stage" id="stage" aria-label="Mimi and your week">
     <div class="fb" id="fb" aria-hidden="true"></div>
     <div class="di" id="di" role="button" tabindex="0" aria-label="Mimi’s live status. Tap to expand.">
       <div class="c"><span class="lt" id="diL"></span><span class="rt" id="diR"></span></div>
@@ -245,12 +246,13 @@
 <script src="device-fit.js"></script>
 <!-- Local stand-in for the claude.ai runtime (database, user). Must load before app.js. -->
 <script src="local-runtime.js"></script>
-<script src="vendor/three.min.js"></script>
+<script src="mimi-world.js"></script>
 <script src="app.js"></script>
 <!-- Settings › Backup: import your old claude.ai data, export and restore backups. -->
 <script src="backup-ui.js"></script>
 <!-- Settings › Account & sync (iPhone app), then the welcome page. -->
 <script src="account-ui.js"></script>
+<script src="extras-ui.js"></script>
 <script src="landing.js"></script>
 </body>
 </html>

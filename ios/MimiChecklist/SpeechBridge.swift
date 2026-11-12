@@ -135,6 +135,8 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
     }
 
     private func begin(lang: String) {
+        // Mimi stops talking when you start talking.
+        MainActor.assumeIsolated { NativeSpeaker.shared.stop() }
         guard let rec = Self.recognizer(for: lang) else {
             send(["type": "error", "error": "language-not-supported"])
             send(["type": "end"])
@@ -181,7 +183,7 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
                             if self.wantsInterim {
                                 self.send(["type": "result", "text": text, "isFinal": false])
                             }
-                            self.armSilence(seconds: 1.4)
+                            self.armSilence(seconds: 1.8)
                         }
                     } else if error != nil {
                         self.end(sendFinal: true)

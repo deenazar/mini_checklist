@@ -26,7 +26,9 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
         haptic: function (kind) { h.postMessage({ cmd: 'haptic', kind: String(kind || 'light') }); },
         share: function (name, text) { h.postMessage({ cmd: 'share', name: String(name || 'mimi-checklist-backup.json').slice(0, 120), text: String(text || '') }); },
         activity: function (state) { h.postMessage({ cmd: 'activity', state: state && typeof state === 'object' ? state : { state: 'end' } }); },
-        account: function (action) { h.postMessage({ cmd: 'account', action: String(action || 'status') }); }
+        account: function (action) { h.postMessage({ cmd: 'account', action: String(action || 'status') }); },
+        speak: function (text, lang) { h.postMessage({ cmd: 'speak', text: String(text || '').slice(0, 1200), lang: String(lang || 'en-IN') }); },
+        stopSpeaking: function () { h.postMessage({ cmd: 'stopSpeaking' }); }
       };
       try {
         navigator.vibrate = function (p) {
@@ -64,6 +66,12 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
         case "activity":
             let state = (body["state"] as? [String: Any]) ?? [:]
             Task { @MainActor in LiveActivityController.shared.handle(state) }
+        case "speak":
+            let text = (body["text"] as? String) ?? ""
+            let lang = (body["lang"] as? String) ?? "en-IN"
+            Task { @MainActor in NativeSpeaker.shared.speak(text, language: lang) }
+        case "stopSpeaking":
+            Task { @MainActor in NativeSpeaker.shared.stop() }
         case "account":
             let action = (body["action"] as? String) ?? "status"
             Task { @MainActor in SyncEngine.shared.handle(action: action) }

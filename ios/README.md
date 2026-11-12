@@ -4,6 +4,24 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 3.1
+
+- **New home design.** The 3D island is replaced by an illustrated sky that follows the time of day (sun, clouds,
+  hills; moon and stars at night), **Mimi as a drawn character** with moods (happy, sad, sleepy at night, talking,
+  watching you type) and little moves (jump, wave, dance), stars orbiting her for finished tasks, a progress ring
+  while a timer runs, and the week as tappable bars.
+- **Mimi sounds like a person.** She now speaks with the iPhone’s own voices, choosing the most natural one you
+  have (Premium, then Enhanced), at a natural pitch. For the best voice: Settings › Mimi › “Make Mimi sound more
+  natural”. Listening waits a little longer before deciding you’ve finished, and Mimi stops talking when you speak.
+- **Adding a task:** tapping + with an empty box just opens the keyboard (no red error), tapping anywhere on the
+  add card opens it, and the keyboard no longer covers the page. Focus outlines are a soft teal instead of red.
+- **Sign out** (and sign in) now in Profile › Account, as well as Settings › Account & sync.
+- **Settings › Upcoming release:** smart reminders and AI features.
+- More motion: tasks cascade in when you switch days, stars burst when you finish a task, sheets and the panel
+  glide in, and empty days show Mimi peeking over a card.
+
+**After `git pull`, run `xcodegen` once** (this version adds a new file, `NativeSpeaker.swift`), then ▶ Run.
+
 ## What’s new in version 3.0
 
 - **Real Dynamic Island & Lock Screen timer (Live Activity).** Start a task’s timer and it shows in the

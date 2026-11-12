@@ -73,6 +73,7 @@ struct ChecklistWebView: UIViewRepresentable {
         model.webView = webView
         // Google sign-in and encrypted sync: give it the page to report to, and sync now.
         SyncEngine.shared.webView = webView
+        NativeSpeaker.shared.webView = webView
         SyncEngine.shared.appBecameActive()
         Self.loadApp(into: webView, model: model)
         return webView

@@ -8,8 +8,9 @@ struct ContentView: View {
             Color(uiColor: .systemBackground).ignoresSafeArea()
 
             // Full screen: the page's sky runs behind the status bar and the Dynamic Island.
+            // (.container only: the keyboard still pushes the page up, so the text box stays visible.)
             ChecklistWebView(model: model)
-                .ignoresSafeArea()
+                .ignoresSafeArea(.container)
                 .opacity(model.firstLoadDone ? 1 : 0)
                 .animation(.easeOut(duration: 0.35), value: model.firstLoadDone)
 
