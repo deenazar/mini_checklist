@@ -28,11 +28,14 @@ final class NativeSpeaker: NSObject, AVSpeechSynthesizerDelegate {
         guard !clean.isEmpty else { return }
         synth.stopSpeaking(at: .immediate)
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+        // Normal media playback at full volume, through the speaker (follows the volume buttons).
+        try? session.setCategory(.playback, mode: .default, options: [.duckOthers])
         try? session.setActive(true)
 
         let utterance = AVSpeechUtterance(string: String(clean.prefix(1200)))
         utterance.voice = Self.bestVoice(for: language)
+        utterance.volume = 1.0
+        utterance.prefersAssistiveTechnologySettings = false
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 1.02
         utterance.pitchMultiplier = 1.06 // a touch bright, still natural
         utterance.postUtteranceDelay = 0.05

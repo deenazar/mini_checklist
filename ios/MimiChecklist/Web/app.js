@@ -3,6 +3,8 @@
   // Voice recognition and voice chat are coming in a later release (Settings › Upcoming release).
   // Set to true to bring back the mic buttons, Talk to Mimi and “Hey Mimi”.
   const VOICE_INPUT=false; window.MIMI_VOICE_INPUT=VOICE_INPUT;
+  // The password vault is hidden for now. Set to true to show its button again.
+  const VAULT=false;
   const TZ='Asia/Kolkata';
   const keyOf=d=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
   const fromKey=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(Date.UTC(y,m-1,d,6,30));};
@@ -887,6 +889,7 @@
   let dict=null;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const canListen=()=>VOICE_INPUT&&(!!dict||!!SR);
+  if(!VAULT&&$('vaultBtn')) $('vaultBtn').hidden=true;
   const listener={ on:false, owner:null, stop:null };
   function listen(owner,{partial,final,end}){
     if(!VOICE_INPUT) return false;

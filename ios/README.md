@@ -4,6 +4,18 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 3.6
+
+- **Account first in Settings.** Settings now opens with Account & sync: Sign in with Google, and once you’re
+  signed in, Sign out (also in Profile › Account).
+- **Mimi’s voice is louder:** she now speaks through normal media playback at full volume (it follows the volume
+  buttons). For a clearer, more natural voice, download an Enhanced voice (Settings › Mimi › “Make Mimi sound more
+  natural”).
+- **Password vault hidden for now** (set `VAULT` to `true` at the top of `web/app.js` to bring it back).
+- **“Access blocked … has not completed the Google verification process” (Error 403: access_denied):** the Gmail
+  you signed in with isn’t on the Google project’s Test users list. Add it in Google Cloud Console › Google Auth
+  Platform › Audience › Test users (see “Google sign-in setup”).
+
 ## What’s new in version 3.5
 
 - **Touch Mimi on the home screen.** Tap her head and she giggles, tickle her belly and she laughs, tap her tail
