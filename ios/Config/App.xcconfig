@@ -3,6 +3,7 @@
 
 APP_BUNDLE_ID = com.azarudeen.mimichecklist
 DEVELOPMENT_TEAM =
-GOOGLE_CLIENT_ID =
+// Google sign-in: the iOS OAuth client for com.azarudeen.mimichecklist (not a secret; it ships inside every app).
+GOOGLE_CLIENT_ID = 309948801759-222rahpu9i16pfusbutc6n9gaeruussf.apps.googleusercontent.com
 
 #include? "Local.xcconfig"

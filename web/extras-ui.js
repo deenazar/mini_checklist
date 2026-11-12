@@ -111,6 +111,67 @@
     }
   }
 
+  // Reminders (iPhone app): a daily nudge to plan the day, and a heads-up when notifications are off.
+  if (N && typeof N.dailyPlan === 'function') {
+    var plan = { on: false, time: '08:00' };
+    var rem = el('div', 'sgrp');
+    rem.id = 'sRemindGrp';
+    rem.appendChild(el('h4', '', 'Reminders'));
+    var sw = el('button', 'switch');
+    sw.type = 'button';
+    sw.setAttribute('role', 'switch');
+    sw.setAttribute('aria-label', 'Daily planning reminder');
+    sw.innerHTML = '<span class="sw"></span>';
+    var planRow = row('Daily planning reminder', 'A nudge every day to add your tasks', sw, null);
+    planRow.id = 'sPlanRow';
+    rem.appendChild(planRow);
+    var time = el('input', 'srow-time');
+    time.type = 'time';
+    time.value = plan.time;
+    time.setAttribute('aria-label', 'Reminder time');
+    var timeRow = row('Remind me at', null, time, null);
+    timeRow.id = 'sPlanTime';
+    rem.appendChild(timeRow);
+    var offRow = row('Notifications are off', 'Turn them on in iPhone Settings so reminders can ring.', null, function () { N.openNotifSettings(); });
+    offRow.id = 'sNotifOff';
+    offRow.classList.add('warn');
+    offRow.hidden = true;
+    rem.appendChild(offRow);
+    var tasksGrp = document.getElementById('sDaily') ? document.getElementById('sDaily').closest('.sgrp') : null;
+    sbody.insertBefore(rem, tasksGrp ? tasksGrp.nextSibling : (sbody.querySelector(':scope > p.wnote') || null));
+
+    var paintPlan = function () {
+      sw.setAttribute('aria-checked', String(plan.on));
+      timeRow.hidden = !plan.on;
+      time.value = plan.time;
+    };
+    var savePlan = function () {
+      paintPlan();
+      if (window.mimiLocal) window.mimiLocal.flag('plan-reminder', JSON.stringify(plan));
+      N.dailyPlan(plan.on, plan.time);
+    };
+    sw.addEventListener('click', function () { plan.on = !plan.on; savePlan(); });
+    time.addEventListener('change', function () { if (/^\d\d:\d\d$/.test(time.value)) { plan.time = time.value; savePlan(); } });
+    window.__mimiNotifStatus = function (state) {
+      offRow.hidden = state !== 'off';
+      planRow.querySelector('.ssub').textContent = state === 'off' && plan.on
+        ? 'On, but iPhone notifications are off for Mimi'
+        : 'A nudge every day to add your tasks';
+    };
+    if (window.mimiLocal) {
+      window.mimiLocal.flag('plan-reminder').then(function (v) {
+        try { var x = JSON.parse(v || 'null'); if (x && typeof x.on === 'boolean') plan = { on: x.on, time: /^\d\d:\d\d$/.test(x.time) ? x.time : '08:00' }; } catch (e) {}
+        paintPlan();
+        if (plan.on) N.dailyPlan(true, plan.time); // keep the iPhone's schedule in step
+        N.notifStatus();
+      });
+    }
+    paintPlan();
+    // Check again whenever Settings opens (you may have changed it in the iPhone Settings app).
+    var ss = document.getElementById('ssheet');
+    if (ss) new MutationObserver(function () { if (ss.classList.contains('open')) N.notifStatus(); }).observe(ss, { attributes: true, attributeFilter: ['class'] });
+  }
+
   // Voice input is in Upcoming release for now: hide its switches.
   if (window.MIMI_VOICE_INPUT === false) {
     ['sWake', 'sFab'].forEach(function (id) { var x = document.getElementById(id); if (x && x.closest('.srow')) x.closest('.srow').hidden = true; });

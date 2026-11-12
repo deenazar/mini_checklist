@@ -76,6 +76,7 @@ struct ChecklistWebView: UIViewRepresentable {
         NativeSpeaker.shared.webView = webView
         // Widgets, Siri and shortcuts send their actions to the page.
         ActionRouter.shared.webView = webView
+        NotificationRouter.shared.webView = webView
         SyncEngine.shared.appBecameActive()
         Self.loadApp(into: webView, model: model)
         return webView

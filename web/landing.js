@@ -74,7 +74,7 @@
     hero.appendChild(orbit);
     hero.appendChild(el('div', 'ld-card c1', '<span class="ck">' + CHECK + '</span>Morning walk'));
     hero.appendChild(el('div', 'ld-card c2', '<span class="ic" style="background:#1E8FE1">💧</span>1.5 L of 2.5 L'));
-    hero.appendChild(el('div', 'ld-card c3', '<span class="ic">25:00</span>Focus: Study session'));
+    hero.appendChild(el('div', 'ld-card c3', '<span class="ic">25:00</span>Focus'));
     root.appendChild(hero);
 
     var copy = el('div', 'ld-copy');

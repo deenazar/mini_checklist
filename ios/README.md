@@ -4,6 +4,22 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 3.4
+
+- **Google sign-in is set up.** The app’s Google client ID is built in (Config/App.xcconfig), so Continue with
+  Google works without editing any files. While the Google project is in Testing, only the Gmail accounts listed
+  under Audience › Test users can sign in.
+- **Daily planning reminder.** Settings › Reminders › “Daily planning reminder”: a notification every day at the
+  time you pick (“Plan your day with Mimi 🐾”). Tapping it opens the app ready to add tasks. If iPhone
+  notifications are off for Mimi, Settings shows a row that opens the iPhone Settings to turn them on.
+- **About push notifications:** every Mimi notification (task reminders, the daily planning reminder) is scheduled
+  on the iPhone itself, so it rings even offline and needs no server. Notifications sent *from a server* (Apple
+  Push Notification service) need a paid Apple Developer account and a server to send them; there’s nothing in
+  Mimi today that needs them.
+- **UI fixes from a full screen-by-screen check** (iPhone 15 and SE, light and dark): welcome page cards no longer
+  cover the title or Mimi, the week’s day labels no longer collide on smaller iPhones, and the Dynamic Island
+  setting describes what it does now.
+
 ## What’s new in version 3.3
 
 - **Upcoming release, redesigned.** Settings › Upcoming release shows four cards: Smart reminders, AI features,
@@ -123,7 +139,8 @@ Google needs to know about the app before it can sign you in. This is free.
    - Application type **iOS**.
    - Bundle ID: `com.azarudeen.mimichecklist` (or the `APP_BUNDLE_ID` you set in `Local.xcconfig`).
    - Create, then copy the **Client ID** (ends with `.apps.googleusercontent.com`).
-5. Put it in `ios/Config/Local.xcconfig`:
+5. The app's client ID is already in `ios/Config/App.xcconfig`. Only if you make your own Google project,
+   put yours in `ios/Config/Local.xcconfig`:
 
    ```
    GOOGLE_CLIENT_ID = 1234567890-abc123.apps.googleusercontent.com

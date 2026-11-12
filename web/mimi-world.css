@@ -132,6 +132,8 @@
 .mw-bar:focus-visible{outline:none}
 .mw-bar:focus-visible .tr{box-shadow:0 0 0 2px #fff,0 0 0 4px rgba(14,159,154,.6)}
 @keyframes mwBarIn{from{opacity:0;transform:translateY(12px)}}
+/* Narrow phones: smaller day labels so they don't run into each other. */
+@media (max-width:400px){ .mw-bar small{font-size:7.5px;letter-spacing:.02em;padding:2px 2px} .mw-bar b{font-size:8.5px} .mw-week{gap:4px;padding:8px 7px 6px} }
 
 /* Tap bursts */
 .mw-burst{position:fixed;z-index:40;width:0;height:0;pointer-events:none}
