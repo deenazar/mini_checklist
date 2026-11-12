@@ -171,7 +171,7 @@
   function toast(m,err){ const t=$('toast'); t.textContent=m; t.classList.toggle('err',!!err); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),err?5000:2400); }
 
   /* ---------- Mimi's home header: illustrated sky, Mimi, the week (mimi-world.js) ---------- */
-  const world=window.MimiWorld({stage:$('stage'),bubble:$('bubble'),toast,B,istHour,reduce});
+  const world=window.MimiWorld({stage:$('stage'),bubble:$('bubble'),toast,B,istHour,reduce,tone});
   ['check','uncheck','del','pause','alarm','win'].forEach(k=>{ const f=sfx[k]; sfx[k]=()=>{ f(); world.react(k); }; });
 
   /* ---------- State ---------- */
@@ -692,9 +692,7 @@
     return out.join(' '); }
   world.double=()=>{ sfx.win(); world.react('flip'); world.say('Secret dance! 💃',2600); diNote('You found Mimi’s secret dance!','Double-tap her any time','ok',2600); speak(L('secret')); };
   world.poke=()=>{ sfx.meow(); world.react('hello'); world.say(pep(),3000); speak(summary()); };
-  // For Mimi's room (play.js): her voice, and how the day is going.
-  window.__mimiSay=t=>speak(t);
-  window.__mimiDay=()=>{ const t=summary(); speak(t); return t; };
+
 
   function renderDays(){
     const t=todayKey(), wrap=$('days'); wrap.textContent='';

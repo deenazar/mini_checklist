@@ -10,14 +10,13 @@ It is the same app as the claude.ai artifact the iPhone app opens, split into no
 | `index.html` | The page markup |
 | `styles.css` | All styles (light and dark themes) |
 | `app.js` | The app: tasks, timers, reminders, water, notes, lists, vault, Mimi |
-| `mimi-world.js`, `mimi-world.css` | The home header: time-of-day sky, Mimi the character with moods and moves, the week's bars |
+| `mimi-world.js`, `mimi-world.css` | The home header: time-of-day sky, Mimi with moods and touch reactions (head, belly, tail, ears, stroking), the week's bars |
 | `local-runtime.js` | Stands in for claude.ai's services so the app runs anywhere (see below) |
 | `device-fit.js` | Fits the page to the phone: full screen behind the status bar, Mimi's pill over the Dynamic Island |
 | `backup-ui.js` | Settings › Backup: export a backup file, restore one |
 | `account-ui.js` | Settings › Account & sync (iPhone app): Google sign-in and encrypted sync status |
 | `extras-ui.js` | Profile › Account (sign in / sign out), the natural-voice tip |
 | `upcoming.js`, `upcoming.css` | Settings › Upcoming release: four feature cards, each with an illustrated intro screen |
-| `play.js`, `play.css` | Mimi’s room: tap Mimi to play (touch reactions, petting, feed, yarn, dance, repeat, happiness) |
 | `landing.js`, `landing.css` | The welcome / login page: a 3-slide animated story, then sign-in (first run; open it again with `index.html?welcome`) |
 | `vendor/` | The fonts, bundled so the app works offline (licences included) |
 | `icon.png` | App icon (same as the iPhone app) |

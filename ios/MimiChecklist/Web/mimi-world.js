@@ -99,7 +99,7 @@
     var scene = el('div', 'mw-scene');
     var mimi = el('button', 'mw-mimi');
     mimi.type = 'button';
-    mimi.setAttribute("aria-label", "Mimi. Tap to play with her. Double-tap for a surprise.");
+    mimi.setAttribute("aria-label", "Mimi. Tap her head, belly, ears or tail, or stroke her. Double-tap for her dance.");
     var ring = el('div', 'mw-ring', '<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="t" cx="50" cy="50" r="46"/><circle class="f" cx="50" cy="50" r="46" pathLength="100"/></svg>');
     var orbit = el('div', 'mw-orbit');
     var zz = el('span', 'mw-zz', '<i>z</i><i>z</i><i>z</i>');
@@ -276,18 +276,106 @@
       double: function () {}
     };
 
-    // Tap Mimi: open her room to play (or, without it, she tells you how the day is going).
-    // Double-tap: her secret dance.
-    var lastPoke = 0;
-    mimi.addEventListener('click', function () {
+    // ---------- Touch: Mimi reacts to where you touch her ----------
+    //  head → giggle · belly → ticklish laugh · tail → grumpy · ears → twitch · elsewhere → meow
+    //  stroke her (drag across) → purrs with hearts · double-tap → her dance · lots of fast taps → dizzy
+    var dizzyEl = el('div', 'mw-dizzy', '<i>⭐</i><i>💫</i><i>⭐</i>');
+    dizzyEl.setAttribute('aria-hidden', 'true');
+    mimi.appendChild(dizzyEl);
+    var tone = opts.tone || function () {};
+    var snd = {
+      giggle: function () { [0, 0.09, 0.18, 0.27].forEach(function (d, i) { tone(900 + i * 140, 0.08, 'triangle', 0.06, d, 1300 + i * 140); }); },
+      laugh: function () { [0, 0.11, 0.22, 0.33].forEach(function (d, i) { tone(760 + (i % 2) * 220, 0.09, 'sawtooth', 0.025, d, 980 + (i % 2) * 260); }); },
+      grump: function () { tone(220, 0.35, 'sawtooth', 0.03, 0, 140); },
+      mrrp: function () { tone(520, 0.12, 'sine', 0.07, 0, 820); },
+      meow: function () { tone(680, 0.14, 'sine', 0.08, 0, 1080); tone(1020, 0.3, 'sine', 0.07, 0.13, 520); },
+      purr: function () { tone(58, 0.32, 'triangle', 0.05, 0, 52); },
+      dizzy: function () { [0, 0.12, 0.24, 0.36, 0.48].forEach(function (d, i) { tone(i % 2 ? 660 : 520, 0.1, 'sine', 0.05, d); }); }
+    };
+    function buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+    function pickOne(a) { return a[Math.floor(Math.random() * a.length)]; }
+    function heart(x, y, glyph) {
+      if (reduce) return;
+      var h = el('i', 'mw-heart', glyph);
+      h.style.left = x + 'px';
+      h.style.top = y + 'px';
+      h.style.setProperty('--dx', ((Math.random() - 0.5) * 60).toFixed(0) + 'px');
+      document.body.appendChild(h);
+      setTimeout(function () { h.remove(); }, 1400);
+    }
+    function zoneAt(fx, fy) {
+      if (fy < 0.31 && ((fx > 0.22 && fx < 0.46) || (fx > 0.54 && fx < 0.78))) return fx < 0.5 ? 'earL' : 'earR';
+      if (fx > 0.70 && fy > 0.46 && fy < 0.88) return 'tail';
+      if (fy < 0.6 && fx > 0.18 && fx < 0.82) return 'head';
+      if (fy >= 0.6 && fx > 0.3 && fx < 0.7) return 'belly';
+      return 'body';
+    }
+    function touchReact(zone, x, y) {
+      wake(); active();
+      if (zone === 'head') { play('hop', 650); setMood('happy', 1300); snd.giggle(); buzz(25); api.say(pickOne(['Hehe 😸', 'That’s nice!', 'More head pats!', 'Purr-fect 💕']), 1800); heart(x, y, '💕'); }
+      else if (zone === 'belly') { play('jump', 800); setMood('happy', 1500); snd.laugh(); buzz(50); api.say(pickOne(['Hahaha! That tickles! 🤭', 'Not the tummy! 😹', 'Hehehe, stop! 😆']), 1800); heart(x, y, '✨'); }
+      else if (zone === 'tail') { play('shake', 520); setMood('sad', 1500); snd.grump(); buzz(100); api.say(pickOne(['Hey! Not my tail! 😾', 'Hmph! 😤', 'That’s my tail!']), 1800); }
+      else if (zone === 'earL' || zone === 'earR') {
+        mimi.classList.remove('twitch-l', 'twitch-r'); void mimi.offsetWidth;
+        mimi.classList.add(zone === 'earL' ? 'twitch-l' : 'twitch-r');
+        setTimeout(function () { mimi.classList.remove('twitch-l', 'twitch-r'); }, 600);
+        play('nod', 600); snd.mrrp(); buzz(20); api.say(pickOne(['Mrrp?', 'Hm? 👂', 'I heard that!']), 1600);
+      } else { play('hop', 600); snd.meow(); buzz(20); api.say(pickOne(['Meow!', 'Mew? 🐾', 'Hi there!']), 1600); }
+    }
+    function dizzy() {
+      play('spin', 1400); snd.dizzy(); buzz(300);
+      mimi.classList.add('is-dizzy');
+      setTimeout(function () { mimi.classList.remove('is-dizzy'); }, 2600);
+      api.say('Whoa… so dizzy 😵‍💫', 2600);
+    }
+
+    var press = null, petting = false, petTick = 0, taps = [], lastTapAt = 0;
+    function stopPetting(sayIt) {
+      if (!petting) return;
+      petting = false;
+      mimi.classList.remove('is-purr');
+      setMood('happy', 900);
+      if (sayIt) api.say(pickOne(['I love that 💕', 'More pets please 🥰', 'Purr-fect!']), 2000);
+    }
+    mimi.addEventListener('pointerdown', function (e) {
+      press = { x: e.clientX, y: e.clientY, t: Date.now(), dist: 0, lx: e.clientX, ly: e.clientY };
+      try { mimi.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    mimi.addEventListener('pointermove', function (e) {
+      if (!press) return;
+      press.dist += Math.hypot(e.clientX - press.lx, e.clientY - press.ly);
+      press.lx = e.clientX; press.ly = e.clientY;
+      if (!petting && press.dist > 50 && Date.now() - press.t > 160) {
+        petting = true; wake(); active();
+        mimi.classList.add('is-purr');
+        setMood('happy', 60000);
+        api.say('Purrr… 💕', 2600);
+      }
+      if (petting && Date.now() - petTick > 300) {
+        petTick = Date.now();
+        heart(e.clientX, e.clientY, pickOne(['💕', '💗', '💖']));
+        snd.purr(); buzz(12); active();
+      }
+    });
+    mimi.addEventListener('pointerup', function (e) {
+      var p = press; press = null;
+      if (petting) { stopPetting(true); return; }
+      if (!p || p.dist > 24) return;
       var now = Date.now();
-      if (now - lastPoke < 380) { lastPoke = 0; api.double(); return; }
-      lastPoke = now;
-      wake();
-      setTimeout(function () {
-        if (lastPoke !== now) return;
-        if (window.mimiRoom) window.mimiRoom.open(figure); else api.poke();
-      }, 390);
+      taps = taps.filter(function (t) { return now - t < 2500; });
+      taps.push(now);
+      if (taps.length >= 6) { taps = []; lastTapAt = 0; return dizzy(); }
+      if (now - lastTapAt < 330) { lastTapAt = 0; return api.double(); }
+      lastTapAt = now;
+      var r = figure.getBoundingClientRect();
+      touchReact(zoneAt((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height), e.clientX, e.clientY);
+    });
+    mimi.addEventListener('pointercancel', function () { press = null; stopPetting(false); });
+    // Keyboard: Enter / Space pats her head.
+    mimi.addEventListener('click', function (e) {
+      if (e.detail !== 0) return; // pointer taps are handled above
+      var r = figure.getBoundingClientRect();
+      touchReact('head', r.left + r.width / 2, r.top + r.height * 0.3);
     });
 
     // Battery: rest the header's endless animations 15 s after the last touch; pause everything while hidden.
