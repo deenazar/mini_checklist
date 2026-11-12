@@ -25,6 +25,8 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: model.error)
+        // Taps on the widgets (mimichecklist://…) open the app with an action.
+        .onOpenURL { url in ActionRouter.shared.handle(url: url) }
     }
 }
 

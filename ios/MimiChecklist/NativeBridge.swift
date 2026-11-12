@@ -12,7 +12,7 @@ import UserNotifications
 /// - `mimiNative.share(fileName, text)` opens the share sheet with a file (used to export backups).
 /// - `mimiNative.activity(state)` shows the running task timer in the Dynamic Island and on the Lock Screen.
 /// - `mimiNative.account(action)` Google sign-in and sync (see SyncEngine).
-final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCenterDelegate {
+final class NativeBridge: NSObject, WKScriptMessageHandler {
     static let handlerName = "mimiNative"
     static let idPrefix = "mimi-rem-"
 
@@ -28,7 +28,12 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
         activity: function (state) { h.postMessage({ cmd: 'activity', state: state && typeof state === 'object' ? state : { state: 'end' } }); },
         account: function (action) { h.postMessage({ cmd: 'account', action: String(action || 'status') }); },
         speak: function (text, lang) { h.postMessage({ cmd: 'speak', text: String(text || '').slice(0, 1200), lang: String(lang || 'en-IN') }); },
-        stopSpeaking: function () { h.postMessage({ cmd: 'stopSpeaking' }); }
+        stopSpeaking: function () { h.postMessage({ cmd: 'stopSpeaking' }); },
+        widgets: function (snap) { if (snap && typeof snap === 'object') h.postMessage({ cmd: 'widgets', snap: snap }); },
+        ready: function () { h.postMessage({ cmd: 'ready' }); },
+        dailyPlan: function (on, time) { h.postMessage({ cmd: 'dailyPlan', on: !!on, time: String(time || '08:00') }); },
+        notifStatus: function () { h.postMessage({ cmd: 'notifStatus' }); },
+        openNotifSettings: function () { h.postMessage({ cmd: 'openNotifSettings' }); }
       };
       try {
         navigator.vibrate = function (p) {
@@ -39,11 +44,6 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
       } catch (e) {}
     })();
     """#
-
-    override init() {
-        super.init()
-        UNUserNotificationCenter.current().delegate = self
-    }
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let cmd = body["cmd"] as? String else { return }
@@ -72,6 +72,19 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
             Task { @MainActor in NativeSpeaker.shared.speak(text, language: lang) }
         case "stopSpeaking":
             Task { @MainActor in NativeSpeaker.shared.stop() }
+        case "widgets":
+            let snap = (body["snap"] as? [String: Any]) ?? [:]
+            Task { @MainActor in WidgetBridge.update(snap) }
+        case "dailyPlan":
+            let on = (body["on"] as? Bool) ?? false
+            let time = (body["time"] as? String) ?? "08:00"
+            Task { @MainActor in NotificationRouter.shared.setDailyPlan(on: on, time: time) }
+        case "notifStatus":
+            Task { @MainActor in NotificationRouter.shared.publishStatus() }
+        case "openNotifSettings":
+            Task { @MainActor in NotificationRouter.shared.openSettings() }
+        case "ready":
+            Task { @MainActor in ActionRouter.shared.pageReady = true }
         case "account":
             let action = (body["action"] as? String) ?? "status"
             Task { @MainActor in SyncEngine.shared.handle(action: action) }
@@ -186,10 +199,4 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
         }
     }
 
-    /// While the app is open, the page itself rings with Mimi, sound and the island,
-    /// so iOS only files the notification quietly in Notification Center.
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
-                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.list])
-    }
 }

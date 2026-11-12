@@ -1,5 +1,8 @@
 (function(){
   const $=id=>document.getElementById(id);
+  // Voice recognition and voice chat are coming in a later release (Settings › Upcoming release).
+  // Set to true to bring back the mic buttons, Talk to Mimi and “Hey Mimi”.
+  const VOICE_INPUT=false; window.MIMI_VOICE_INPUT=VOICE_INPUT;
   const TZ='Asia/Kolkata';
   const keyOf=d=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
   const fromKey=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(Date.UTC(y,m-1,d,6,30));};
@@ -168,7 +171,7 @@
   function toast(m,err){ const t=$('toast'); t.textContent=m; t.classList.toggle('err',!!err); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),err?5000:2400); }
 
   /* ---------- Mimi's home header: illustrated sky, Mimi, the week (mimi-world.js) ---------- */
-  const world=window.MimiWorld({stage:$('stage'),bubble:$('bubble'),toast,B,istHour,reduce});
+  const world=window.MimiWorld({stage:$('stage'),bubble:$('bubble'),toast,B,istHour,reduce,tone});
   ['check','uncheck','del','pause','alarm','win'].forEach(k=>{ const f=sfx[k]; sfx[k]=()=>{ f(); world.react(k); }; });
 
   /* ---------- State ---------- */
@@ -336,7 +339,9 @@
   const CATSVG='<svg viewBox="0 0 32 32"><path d="M6 13 7 4l7 5h4l7-5 1 9a11 10 0 1 1-20 0z" fill="#FFF6EE" stroke="#1F2226" stroke-width="1.4" stroke-linejoin="round"/><path d="M19 9l6-4.5.8 7z" fill="#FF9F6E"/><circle cx="12" cy="17" r="1.8" fill="#1F2226"/><circle cx="20" cy="17" r="1.8" fill="#1F2226"/><path d="M15 20.5h2l-1 1.2z" fill="#FF8FA8"/><path d="M13.5 23q2.5 1.6 5 0" fill="none" stroke="#1F2226" stroke-width="1.2" stroke-linecap="round"/></svg>';
   const di=$('di'); let diBig=false, diNoteT=0, diNoting=false;
   function keyOfTask(t){ for(const k of [todayKey(),current]) if(tasksFor(k).some(x=>x.id===t.id)) return k; return current; }
-  function diNote(title,sub,kind,ms){ if(!feat.island){ if(kind==='warn'&&!/Focus started|Timer restarted/.test(title)) toast(title+(sub?' · '+sub:'')); return; } $('diNav').innerHTML=CATSVG; $('diNt').textContent=title; $('diNs').textContent=sub||''; $('diN').className='n'+(kind?' '+kind:'');
+  // In the iPhone app on a Dynamic Island iPhone, the real island is used (Live Activity), not a drawn copy.
+  const realIsland=()=>document.documentElement.classList.contains('hw-island')&&document.documentElement.classList.contains('in-app');
+  function diNote(title,sub,kind,ms){ if(!feat.island||realIsland()){ if(kind==='warn'&&!/Focus started|Timer restarted/.test(title)) toast(title+(sub?' · '+sub:'')); return; } $('diNav').innerHTML=CATSVG; $('diNt').textContent=title; $('diNs').textContent=sub||''; $('diN').className='n'+(kind?' '+kind:'');
     if(diBig) return; di.classList.add('note'); diNoting=true; di.classList.remove('pulse'); void di.offsetWidth; di.classList.add('pulse');
     clearTimeout(diNoteT); diNoteT=setTimeout(()=>{ di.classList.remove('note'); diNoting=false; },ms||2600); }
   function diCompact(){ const r=runningTask(), L=$('diL'), Rt=$('diR');
@@ -644,6 +649,32 @@
     const msg=r?{state:'run',id:r.id,title:short(r.text,60),list:catOf(r).n,color:catOf(r).c,startedAt:Math.round(r.timer.since-(r.timer.acc||0)),plannedMin:r.est||0,done:s.done,total:s.total}:{state:'end'};
     const sig=JSON.stringify(msg); if(sig===actSig) return; actSig=sig; try{ N.activity(msg); }catch(e){} }
   setInterval(syncNativeActivity,1000);
+  /* iPhone app: today's summary for the Home Screen and Lock Screen widgets (sent only when it changes). */
+  let wdSig='';
+  function syncNativeWidgets(){ const N=window.mimiNative; if(!N||typeof N.widgets!=='function'||!daysReady) return;
+    const t=todayKey(), all=live(tasksFor(t)), s=stats(all);
+    const open=counted(all).filter(x=>!x.done).sort((a,b)=>(a.pri||2)-(b.pri||2)).slice(0,6).map(x=>({text:short(x.text,48),color:catOf(x).c,minutes:Math.round(x.est||0),priority:Math.round(x.pri||0)}));
+    const keys=[]; for(let i=6;i>=0;i--) keys.push(shift(t,-i));
+    const week=keys.map(k=>({label:fmt(k,{weekday:'narrow'}),value:stats(tasksFor(k)).pct/100,today:k===t}));
+    const r=runningTask();
+    const snap={date:t,done:s.done,total:s.total,next:open,waterMl:Math.round(wTotal(t)),waterGoalMl:Math.round(wGoal(t)),waterUnit:wset.unit==='L'?'L':'ml',week,
+      streak:parseInt($('stStreak').textContent,10)||0,focusMinutes:Math.round(focusMs(t)/60000),
+      running:r?{title:short(r.text,48),startedAt:Math.round(r.timer.since-(r.timer.acc||0)),plannedMinutes:Math.round(r.est||0)}:null};
+    const sig=JSON.stringify(snap); if(sig===wdSig) return; wdSig=sig; try{ N.widgets({...snap,updatedAt:Date.now()}); }catch(e){} }
+  setInterval(syncNativeWidgets,3000);
+
+  /* iPhone app: actions from widgets, Siri, the Shortcuts app, Back Tap and the Action button.
+     {type:'add', text} · {type:'water', ml} · {type:'focus'} · {type:'talk'} · {type:'summary'} */
+  window.__mimiAction=function(a){ if(!a||typeof a!=='object') return; let tries=0;
+    const go=()=>{ if((!db||!daysReady)&&tries++<40) return setTimeout(go,300); runAction(a); }; go(); };
+  function runAction(a){ const t=todayKey();
+    if(a.type==='add'){ const text=String(a.text||'').replace(/\s+/g,' ').trim().slice(0,200); if(current!==t){ current=t; render(); }
+      if(text){ $('newTask').value=text; $('addForm').requestSubmit(); } else $('newTask').focus(); }
+    else if(a.type==='water'){ const ml=Math.max(10,Math.min(5000,Math.round(Number(a.ml)||250))); addWater(ml); if(!feat.water) toast('Logged '+ml+' ml of water.'); }
+    else if(a.type==='focus'){ const r=runningTask(); if(r){ toast('Already focusing: '+short(r.text,30)); return; }
+      const next=counted(live(tasksFor(t))).find(x=>!x.done); if(next){ if(current!==t){ current=t; render(); } start(next); } else { toast('Nothing left to focus on today 🎉'); world.react('win'); } }
+    else if(a.type==='talk'){ if(VOICE_INPUT) $('talkFab').click(); else if(window.mimiSoon) window.mimiSoon.open('voicechat'); }
+    else if(a.type==='summary'){ world.poke(); } }
 
   const pep=()=>{ const s=window.__s||{done:0,total:0}, left=s.total-s.done, r=runningTask();
     if(r) return 'Stay focused on “'+short(r.text,18)+'”!';
@@ -661,6 +692,7 @@
     return out.join(' '); }
   world.double=()=>{ sfx.win(); world.react('flip'); world.say('Secret dance! 💃',2600); diNote('You found Mimi’s secret dance!','Double-tap her any time','ok',2600); speak(L('secret')); };
   world.poke=()=>{ sfx.meow(); world.react('hello'); world.say(pep(),3000); speak(summary()); };
+
 
   function renderDays(){
     const t=todayKey(), wrap=$('days'); wrap.textContent='';
@@ -854,9 +886,10 @@
   /* ---------- Voice input (dictation, browser speech, or the keyboard mic) ---------- */
   let dict=null;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  const canListen=()=>!!dict||!!SR;
+  const canListen=()=>VOICE_INPUT&&(!!dict||!!SR);
   const listener={ on:false, owner:null, stop:null };
   function listen(owner,{partial,final,end}){
+    if(!VOICE_INPUT) return false;
     if(listener.on){ stopListen(); return false; }
     if(typeof wakeStop==='function'&&wake.on) wakeStop();
     listener.owner=owner;
@@ -934,7 +967,7 @@
 
   /* ---------- Talk to Mimi ---------- */
   let sampler=null, chat=[], busy=false;
-  let fabOn=true; try{ fabOn=localStorage.getItem('dc-fab')!=='off'; }catch(e){}
+  let fabOn=VOICE_INPUT; try{ if(VOICE_INPUT) fabOn=localStorage.getItem('dc-fab')!=='off'; }catch(e){}
   function csheet(open){ openSheet('csheet',open); if(open){ renderChat(); } else { stopListen(); $('cMic').classList.remove('live'); } }
   function addMsg(who,text,cls){ chat.push({who,text}); if(chat.length>40) chat=chat.slice(-40); renderChat(cls); }
   function renderChat(){ const l=$('cLog'); l.textContent='';
@@ -1236,7 +1269,7 @@
   $('vbody').addEventListener('pointerdown',vIdle);
 
   /* ---------- "Hey Mimi" hands-free ---------- */
-  let wakeOn=false; try{ wakeOn=localStorage.getItem('dc-wake')==='on'; }catch(e){}
+  let wakeOn=false; try{ wakeOn=VOICE_INPUT&&localStorage.getItem('dc-wake')==='on'; }catch(e){}
   const wake={on:false,stop:null,needTap:false,blocked:false}; let armed=false, armT=0, quietUntil=0;
   const WAKE=/\b(?:hey|hi|hay|ok|okay|hello)[\s,]+(?:mimi|mimmi|mimmy|mimi's|meemee|memi|mi mi|mimee|mini|minnie|mimy)\b/i;
   function paintWake(){ $('talkFab').classList.toggle('ear',wakeOn&&wake.on); $('sWake').setAttribute('aria-checked',String(wakeOn));
@@ -1412,4 +1445,6 @@
       },()=>{});
     });
   } else toast('Your checklist can’t be saved on this device.',true);
+  // Tell the app the page is ready for actions from widgets and shortcuts.
+  try{ window.mimiNative&&typeof window.mimiNative.ready==='function'&&window.mimiNative.ready(); }catch(e){}
 })();

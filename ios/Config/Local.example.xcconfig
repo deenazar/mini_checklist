@@ -7,4 +7,4 @@ DEVELOPMENT_TEAM = ABCDE12345
 // APP_BUNDLE_ID = com.azarudeen.mimichecklist
 
 // Google sign-in: the iOS OAuth client ID from Google Cloud Console (see ios/README.md).
-GOOGLE_CLIENT_ID = 1234567890-abcdefghijklmnop.apps.googleusercontent.com
+// GOOGLE_CLIENT_ID = (only if you use your own Google project; the shared one is in App.xcconfig)

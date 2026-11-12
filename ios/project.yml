@@ -13,8 +13,8 @@ configFiles:
   Release: Config/App.xcconfig
 settings:
   base:
-    MARKETING_VERSION: "3.1"
-    CURRENT_PROJECT_VERSION: "6"
+    MARKETING_VERSION: "3.5"
+    CURRENT_PROJECT_VERSION: "10"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
 targets:
@@ -53,6 +53,18 @@ targets:
         NSPhotoLibraryUsageDescription: Choose a profile photo for your checklist.
         # Google sign-in (set GOOGLE_CLIENT_ID in Config/Local.xcconfig).
         MimiGoogleClientID: $(GOOGLE_CLIENT_ID)
+        # Shared with the widgets (today's summary).
+        MimiAppGroup: group.$(APP_BUNDLE_ID)
+        # Widget taps open the app with an action: mimichecklist://water?ml=250 and so on.
+        CFBundleURLTypes:
+          - CFBundleURLName: $(APP_BUNDLE_ID)
+            CFBundleURLSchemes:
+              - mimichecklist
+    entitlements:
+      path: MimiChecklist/MimiChecklist.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.$(APP_BUNDLE_ID)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
@@ -71,8 +83,14 @@ targets:
       path: MimiWidgets/Info.plist
       properties:
         CFBundleDisplayName: Mimi
+        MimiAppGroup: group.$(APP_BUNDLE_ID)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: MimiWidgets/MimiWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.$(APP_BUNDLE_ID)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).widgets

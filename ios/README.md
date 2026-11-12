@@ -4,6 +4,63 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 3.5
+
+- **Touch Mimi on the home screen.** Tap her head and she giggles, tickle her belly and she laughs, tap her tail
+  and she’s grumpy, tap an ear and it twitches, stroke her and she purrs (hearts and a gentle vibration),
+  double-tap for her dance, and tap lots, fast, and she gets dizzy. Just a little delight; the checklist stays
+  the focus.
+- **Welcome / login page:** a short animated story in three slides with vector illustrations (tasks being ticked
+  off, a focus timer and water filling up, Mimi cheering with confetti). Swipe, tap the dots, or let it play,
+  then Continue with Google.
+
+## What’s new in version 3.4
+
+- **Google sign-in is set up.** The app’s Google client ID is built in (Config/App.xcconfig), so Continue with
+  Google works without editing any files. While the Google project is in Testing, only the Gmail accounts listed
+  under Audience › Test users can sign in.
+- **Daily planning reminder.** Settings › Reminders › “Daily planning reminder”: a notification every day at the
+  time you pick (“Plan your day with Mimi 🐾”). Tapping it opens the app ready to add tasks. If iPhone
+  notifications are off for Mimi, Settings shows a row that opens the iPhone Settings to turn them on.
+- **About push notifications:** every Mimi notification (task reminders, the daily planning reminder) is scheduled
+  on the iPhone itself, so it rings even offline and needs no server. Notifications sent *from a server* (Apple
+  Push Notification service) need a paid Apple Developer account and a server to send them; there’s nothing in
+  Mimi today that needs them.
+- **UI fixes from a full screen-by-screen check** (iPhone 15 and SE, light and dark): welcome page cards no longer
+  cover the title or Mimi, the week’s day labels no longer collide on smaller iPhones, and the Dynamic Island
+  setting describes what it does now.
+
+## What’s new in version 3.3
+
+- **Upcoming release, redesigned.** Settings › Upcoming release shows four cards: Smart reminders, AI features,
+  Voice recognition and Voice chat with Mimi. Tap one for its own intro screen with an illustration.
+- **Voice recognition and voice chat are paused** until that release: the mic buttons, the Talk button and
+  “Hey Mimi” are hidden (Mimi still speaks her replies). Siri’s “Talk to Mimi” opens the voice chat intro.
+  To turn voice input back on, set `VOICE_INPUT` to `true` at the top of `web/app.js`.
+
+## What’s new in version 3.2
+
+- **Only the real Dynamic Island.** On iPhones with a Dynamic Island the app no longer draws its own island
+  (that copy looked like a glitch). Your running timer shows in the real island and on the Lock Screen as a
+  Live Activity. Note: iOS never shows an app’s own Live Activity in the island while that app is open on
+  screen; swipe home or lock the phone to see it. In the app, Mimi’s messages appear as small notes.
+- **5 widgets** (long-press the Home Screen › + › Mimi Checklist):
+  - **Today** (small, and Lock Screen circle / line / inline): progress ring and what’s left.
+  - **Next tasks** (medium, large): your next tasks with an **Add** button.
+  - **Focus** (small): the running timer counting live, or tap to start your next task.
+  - **Water** (small, and Lock Screen circle): today’s water; tap to log a glass (250 ml).
+  - **Week** (medium): this week’s bars, your streak and today’s focus time.
+- **Shortcuts:** “Add a task”, “Log water”, “Start focus”, “What’s left” and “Talk to Mimi” work with Siri
+  (“Add a task in Mimi Checklist”), the Shortcuts app, Spotlight, the **Action button**, and **Back Tap**
+  (double- or triple-tap the back of the iPhone). See “Shortcuts and Back Tap” below.
+- **Battery and heat:** the home screen used to redraw the whole page 60 times a second (moving clouds) and
+  blurred the sky live; it now rests when you’re not touching it. Measured idle work dropped about 8×
+  (1.4 s → 0.17–0.19 s of busy time per 10 s). The microphone stops when the app leaves the screen,
+  “Hey Mimi” listens on the iPhone itself (no network), and Google sync checks for other devices’ changes every
+  5 minutes instead of every 90 seconds (your own changes still sync right away).
+
+**After `git pull`, run `xcodegen` once** (new files and an App Group for the widgets), then ▶ Run.
+
 ## What’s new in version 3.1
 
 - **New home design.** The 3D island is replaced by an illustrated sky that follows the time of day (sun, clouds,
@@ -92,7 +149,8 @@ Google needs to know about the app before it can sign you in. This is free.
    - Application type **iOS**.
    - Bundle ID: `com.azarudeen.mimichecklist` (or the `APP_BUNDLE_ID` you set in `Local.xcconfig`).
    - Create, then copy the **Client ID** (ends with `.apps.googleusercontent.com`).
-5. Put it in `ios/Config/Local.xcconfig`:
+5. The app's client ID is already in `ios/Config/App.xcconfig`. Only if you make your own Google project,
+   put yours in `ios/Config/Local.xcconfig`:
 
    ```
    GOOGLE_CLIENT_ID = 1234567890-abc123.apps.googleusercontent.com
@@ -106,6 +164,29 @@ Good to know about Google:
   (your sync password stays saved). Publishing the project (**Audience › Publish app**) avoids that; Google may
   show an “unverified app” notice for a personal app, which is fine for your own use.
 - The app asks only for your name, email and its **own hidden folder** in Drive. It can’t see your other files.
+
+## Widgets
+
+Long-press an empty spot on the Home Screen › **+** (top left) › search **Mimi Checklist** › pick a widget and
+size › **Add Widget**. For the Lock Screen: long-press the Lock Screen › **Customize** › **Lock Screen** › tap
+the widget area › Mimi Checklist.
+
+Widgets share today’s summary with the app through an **App Group** (`group.<your bundle ID>`), which Xcode sets
+up automatically with your team. Open the app once after installing so the widgets have something to show.
+If a widget keeps saying “Open Mimi Checklist once…”, the App Group couldn’t be set up for your account:
+in Xcode, check **Signing & Capabilities** for both targets (MimiChecklist and MimiWidgets) shows the same
+App Group with no errors.
+
+## Shortcuts and Back Tap
+
+- **Siri:** “Add a task in Mimi Checklist”, “Log water in Mimi Checklist”, “Start focus in Mimi Checklist”,
+  “What’s left in Mimi Checklist”, “Talk to Mimi Checklist”.
+- **Shortcuts app:** the same five actions are under **Mimi Checklist**; combine them with anything.
+- **Action button** (iPhone 15 Pro and later): Settings › **Action Button** › **Shortcut** › Mimi Checklist ›
+  pick an action (e.g. Log water).
+- **Back Tap** (double-tap the back of the iPhone):
+  1. In the **Shortcuts** app tap **+**, search **Mimi Checklist**, add an action (e.g. **Log water**), name it.
+  2. Settings › **Accessibility** › **Touch** › **Back Tap** › **Double Tap** (or Triple Tap) › choose that shortcut.
 
 ## The sync password
 
