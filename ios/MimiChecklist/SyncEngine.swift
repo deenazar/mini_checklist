@@ -63,7 +63,8 @@ final class SyncEngine {
         guard GoogleAuth.shared.isSignedIn else { return }
         Task { await sync(reason: "open") }
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 90, repeats: true) { [weak self] _ in
+        // Changes sync right away on their own; this only picks up other devices' changes (battery-friendly).
+        timer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { _ = Task { await self?.sync(reason: "timer") } }
         }
     }

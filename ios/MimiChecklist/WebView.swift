@@ -74,6 +74,8 @@ struct ChecklistWebView: UIViewRepresentable {
         // Google sign-in and encrypted sync: give it the page to report to, and sync now.
         SyncEngine.shared.webView = webView
         NativeSpeaker.shared.webView = webView
+        // Widgets, Siri and shortcuts send their actions to the page.
+        ActionRouter.shared.webView = webView
         SyncEngine.shared.appBecameActive()
         Self.loadApp(into: webView, model: model)
         return webView
@@ -124,6 +126,11 @@ struct ChecklistWebView: UIViewRepresentable {
             default:
                 decisionHandler(.cancel)
             }
+        }
+
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            // The page is (re)loading: hold actions until it says it's ready again.
+            ActionRouter.shared.pageReady = false
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

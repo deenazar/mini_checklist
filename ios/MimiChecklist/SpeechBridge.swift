@@ -2,6 +2,7 @@ import Foundation
 import WebKit
 import Speech
 import AVFoundation
+import UIKit
 
 /// Gives the checklist page speech recognition inside the app.
 ///
@@ -56,6 +57,17 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
 
     weak var webView: WKWebView?
 
+    override init() {
+        super.init()
+        // Battery: never keep the microphone running once the app leaves the screen.
+        NotificationCenter.default.addObserver(self, selector: #selector(appLeftScreen),
+                                               name: UIApplication.didEnterBackgroundNotification, object: nil)
+    }
+
+    @objc private func appLeftScreen() {
+        if running { end(sendFinal: false) }
+    }
+
     private let engine = AVAudioEngine()
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
@@ -69,6 +81,8 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
     private var starting = false
     /// The page asked for in-progress text (`interimResults`), not only the final words.
     private var wantsInterim = false
+    /// “Hey Mimi” listens continuously: keep that on the iPhone (no network) to save battery.
+    private var continuous = false
 
     // MARK: Messages from the page
 
@@ -84,6 +98,7 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
             currentId = id
             starting = true
             wantsInterim = (body["interimResults"] as? Bool) ?? false
+            continuous = (body["continuous"] as? Bool) ?? false
             let lang = (body["lang"] as? String) ?? "en-US"
             authorize { [weak self] ok in
                 guard let self, self.currentId == id, self.starting else { return }
@@ -157,6 +172,7 @@ final class SpeechBridge: NSObject, WKScriptMessageHandler {
             let req = SFSpeechAudioBufferRecognitionRequest()
             req.shouldReportPartialResults = true
             req.addsPunctuation = true
+            if continuous && rec.supportsOnDeviceRecognition { req.requiresOnDeviceRecognition = true }
             request = req
 
             let input = engine.inputNode

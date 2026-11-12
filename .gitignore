@@ -10,3 +10,7 @@ DerivedData/
 # iOS: generated Xcode project and personal settings
 ios/MimiChecklist.xcodeproj/
 ios/Config/Local.xcconfig
+ios/MimiChecklist/MimiChecklist.entitlements
+ios/MimiWidgets/MimiWidgets.entitlements
+ios/MimiChecklist/Info.plist
+ios/MimiWidgets/Info.plist

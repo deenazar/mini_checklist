@@ -28,7 +28,9 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
         activity: function (state) { h.postMessage({ cmd: 'activity', state: state && typeof state === 'object' ? state : { state: 'end' } }); },
         account: function (action) { h.postMessage({ cmd: 'account', action: String(action || 'status') }); },
         speak: function (text, lang) { h.postMessage({ cmd: 'speak', text: String(text || '').slice(0, 1200), lang: String(lang || 'en-IN') }); },
-        stopSpeaking: function () { h.postMessage({ cmd: 'stopSpeaking' }); }
+        stopSpeaking: function () { h.postMessage({ cmd: 'stopSpeaking' }); },
+        widgets: function (snap) { if (snap && typeof snap === 'object') h.postMessage({ cmd: 'widgets', snap: snap }); },
+        ready: function () { h.postMessage({ cmd: 'ready' }); }
       };
       try {
         navigator.vibrate = function (p) {
@@ -72,6 +74,11 @@ final class NativeBridge: NSObject, WKScriptMessageHandler, UNUserNotificationCe
             Task { @MainActor in NativeSpeaker.shared.speak(text, language: lang) }
         case "stopSpeaking":
             Task { @MainActor in NativeSpeaker.shared.stop() }
+        case "widgets":
+            let snap = (body["snap"] as? [String: Any]) ?? [:]
+            Task { @MainActor in WidgetBridge.update(snap) }
+        case "ready":
+            Task { @MainActor in ActionRouter.shared.pageReady = true }
         case "account":
             let action = (body["action"] as? String) ?? "status"
             Task { @MainActor in SyncEngine.shared.handle(action: action) }

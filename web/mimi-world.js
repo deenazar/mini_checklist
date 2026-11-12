@@ -188,6 +188,7 @@
     var api = {
       say: function (t, ms) {
         if (!t) return;
+        active();
         bub.textContent = t;
         placeBubble();
         bub.classList.add('show');
@@ -200,6 +201,7 @@
       },
       react: function (k, extra) {
         wake();
+        active();
         var tap = lastTap && Date.now() - lastTap.t < 600 ? lastTap : null;
         if (k === 'check') { play('jump', 800); setMood('happy', 1500); api.say(B('check')); if (tap) burst(tap.x, tap.y, 9, COLORS); }
         else if (k === 'uncheck') { play('nod', 600); setMood('sad', 1000); api.say(B('uncheck')); }
@@ -278,9 +280,24 @@
       setTimeout(function () { if (lastPoke === now) api.poke(); }, 390);
     });
 
+    // Battery: rest the header's endless animations 15 s after the last touch; pause everything while hidden.
+    var restT = 0;
+    function active() {
+      if (stage.classList.contains('mw-rest')) { stage.classList.remove('mw-rest'); document.documentElement.classList.remove('mw-rest'); }
+      clearTimeout(restT);
+      restT = setTimeout(function () { stage.classList.add('mw-rest'); document.documentElement.classList.add('mw-rest'); }, 15000);
+    }
+    ['pointerdown', 'keydown', 'wheel'].forEach(function (t) { document.addEventListener(t, active, { passive: true, capture: true }); });
+    document.addEventListener('scroll', active, { passive: true, capture: true });
+    document.addEventListener('visibilitychange', function () {
+      document.documentElement.classList.toggle('mw-hidden', document.hidden);
+      if (!document.hidden) { paintSky(); active(); }
+    });
+    active();
+
     paintSky();
-    setInterval(paintSky, 5 * 60 * 1000);
-    setInterval(paintMood, 30 * 1000);
+    setInterval(function () { if (!document.hidden) paintSky(); }, 5 * 60 * 1000);
+    setInterval(function () { if (!document.hidden) paintMood(); }, 30 * 1000);
     window.addEventListener('resize', function () { if (bub.classList.contains('show')) placeBubble(); });
     return api;
   };
