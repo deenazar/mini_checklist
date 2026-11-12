@@ -251,7 +251,9 @@
     renderFilters(tasks);
     const vis=fcat==='all'?tasks:tasks.filter(x=>catOf(x).k===fcat);
     if(tasks.length&&!vis.length){ const e=document.createElement('div'); e.className='empty'; const st=document.createElement('strong'); st.textContent='Nothing in '+((CATS.find(c=>c.k===fcat)||{n:'this list'}).n); const p=document.createElement('p'); p.textContent='Tap All to see every task.'; e.append(st,p); list.append(e); }
-    [...bySort(vis.filter(x=>!x.movedTo&&(!x.done||x.id===stickId))),...bySort(vis.filter(x=>!x.movedTo&&x.done&&x.id!==stickId)),...vis.filter(x=>x.movedTo)].forEach(task=>list.append(card(task)));
+    // The task whose timer is running always comes first.
+    const runFirst=ts=>{ const i=ts.findIndex(x=>x.timer&&x.timer.since&&!x.done); if(i>0){ const r=ts.splice(i,1)[0]; ts.unshift(r); } return ts; };
+    [...runFirst(bySort(vis.filter(x=>!x.movedTo&&(!x.done||x.id===stickId)))),...bySort(vis.filter(x=>!x.movedTo&&x.done&&x.id!==stickId)),...vis.filter(x=>x.movedTo)].forEach(task=>list.append(card(task)));
     renderDays(); renderWater(); if($('isheet').classList.contains('open')) renderInsights(); updateIsland();
     fresh=null;
     if(!reduce){ let i=0; list.querySelectorAll('.task').forEach(el=>{ const id=el.dataset.id, was=prevTop.get(id);
@@ -926,26 +928,49 @@
   let me=null, notes=[], notesReady=false, nEdit=null;
   const notesCol=()=>db&&me?db.collection('data/users/'+me+'/notes/items'):null;
   const noteWhen=ms=>{ const k=keyOf(new Date(ms)); const t=timeOf(ms); return k===todayKey()?'Today, '+t:k===shift(todayKey(),-1)?'Yesterday, '+t:fmt(k,{day:'numeric',month:'short'})+', '+t; };
-  function nsheet(open){ openSheet('nsheet',open); if(open){ renderNotes(); let d=''; try{ d=localStorage.getItem('dc-ndraft')||''; }catch(e){} if(!nEdit&&!$('nText').value) $('nText').value=d; setTimeout(()=>$('nText').focus(),reduce?0:320); } else { stopListen(); } }
+  // Notes open as a list (search, pinned first, tap to open); writing happens in an editor view.
+  let nMode='list', nQuery='';
+  const nBar=document.createElement('div'); nBar.className='nbar';
+  nBar.innerHTML='<label class="nsearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="nSearch" type="search" placeholder="Search notes" aria-label="Search notes" autocomplete="off"></label><button class="nnew" id="nNew" type="button"><b>+</b> New note</button>';
+  $('nForm').before(nBar);
+  const nActs=document.createElement('div'); nActs.className='nacts'; nActs.id='nActs'; $('nForm').after(nActs);
+  function nShow(mode){ nMode=mode; const ed=mode==='edit';
+    $('nForm').hidden=!ed; nBar.hidden=ed; $('nList').hidden=ed; $('nsheet').classList.toggle('editing',ed);
+    renderNotes(); if(ed) setTimeout(()=>{ const t=$('nText'); t.focus(); t.setSelectionRange(t.value.length,t.value.length); },reduce?0:220); }
+  function openEditor(n){ nEdit=n?n.id:null; let d=''; if(!n){ try{ d=localStorage.getItem('dc-ndraft')||''; }catch(e){} } $('nText').value=n?n.text:d; nShow('edit'); }
+  function nsheet(open){ openSheet('nsheet',open); if(open){ nEdit=null; nQuery=''; $('nSearch').value=''; nShow('list'); } else { stopListen(); } }
   function renderNotes(){
     const l=$('nList'); l.textContent='';
-    $('nTitle').textContent=nEdit?'Edit note':'Notes';
-    $('nCancel').hidden=!nEdit; $('nSave').textContent=nEdit?'Update':'Save';
+    const editing=nMode==='edit', cur=nEdit?notes.find(x=>x.id===nEdit):null;
+    $('nTitle').textContent=editing?(cur?'Edit note':'New note'):'Notes'+(notes.length?' · '+notes.length:'');
+    $('nCancel').hidden=!editing; $('nSave').textContent=cur?'Update':'Save';
     $('nMic').hidden=!canListen();
-    if(!me){ const n=document.createElement('div'); n.className='nempty'; n.textContent=db?'Loading your notes…':'Open this page on claude.ai while signed in to save notes.'; l.append(n); return; }
-    if(!notes.length){ const n=document.createElement('div'); n.className='nempty'; n.textContent=notesReady?'No notes yet. Type above and tap Save.':'Loading your notes…'; l.append(n); return; }
-    [...notes].sort((a,b)=>(b.pin?1:0)-(a.pin?1:0)||b.createdAt-a.createdAt).forEach(n=>{
-      const c=document.createElement('div'); c.className='note'+(n.pin?' pin':'');
-      const p=document.createElement('p'); p.textContent=n.text; p.addEventListener('click',()=>c.classList.toggle('open'));
-      const m=document.createElement('div'); m.className='nm';
-      const w=document.createElement('span'); w.textContent=(n.pin?'📌 ':'')+noteWhen(n.createdAt); m.append(w);
-      const btn=(t,f,cls)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; if(cls) b.className=cls; b.addEventListener('click',f); m.append(b); };
-      btn(n.pin?'Unpin':'Pin',()=>{ sfx.tap(); saveNote(n.id,{...n,pin:!n.pin}); });
-      btn('Task',()=>{ addTaskFromText(n.text.split('\n')[0].slice(0,200)); toast('Added to today’s tasks'); });
-      btn('Edit',()=>{ sfx.tap(); nEdit=n.id; $('nText').value=n.text; renderNotes(); $('nText').focus(); });
-      btn('Delete',()=>{ sfx.del(); deleteNote(n); },'red');
-      c.append(p,m); l.append(c); });
+    // Editor actions for an existing note
+    nActs.textContent=''; nActs.hidden=!(editing&&cur);
+    if(editing&&cur){ const act=(t,f,cls)=>{ const b=document.createElement('button'); b.type='button'; b.className='nact'+(cls?' '+cls:''); b.innerHTML=t; b.addEventListener('click',f); nActs.append(b); };
+      act(cur.pin?'📌 Unpin':'📌 Pin',()=>{ sfx.tap(); saveNote(cur.id,{...cur,pin:!cur.pin}); toast(cur.pin?'Unpinned':'Pinned to the top'); renderNotes(); });
+      act('✅ Make it a task',()=>{ addTaskFromText(($('nText').value||cur.text).split('\n')[0].slice(0,200)); toast('Added to today’s tasks'); });
+      act('🗑 Delete',()=>{ if(!confirm('Delete this note?')) return; sfx.del(); deleteNote(cur); nEdit=null; $('nText').value=''; nShow('list'); },'red'); }
+    if(editing) return;
+    if(!me){ const n=document.createElement('div'); n.className='nempty'; n.textContent=db?'Loading your notes…':'Your notes can’t be opened right now.'; l.append(n); return; }
+    if(!notes.length){ const n=document.createElement('div'); n.className='nempty'; n.innerHTML='<div class="empty-art">'+EMPTY_ART+'</div><strong>No notes yet</strong><span>Tap <b>+ New note</b> to write your first one.</span>'; l.append(n); return; }
+    const q=nQuery.trim().toLowerCase();
+    const list=[...notes].filter(n=>!q||n.text.toLowerCase().includes(q)).sort((a,b)=>(b.pin?1:0)-(a.pin?1:0)||(b.updatedAt||b.createdAt)-(a.updatedAt||a.createdAt));
+    if(!list.length){ const n=document.createElement('div'); n.className='nempty'; n.textContent='No notes match “'+nQuery.trim()+'”.'; l.append(n); return; }
+    let group='';
+    list.forEach((n,i)=>{
+      const g=n.pin?'Pinned':'Notes'; if(g!==group&&(n.pin||list.some(x=>x.pin))){ group=g; const h=document.createElement('h5'); h.className='ngroup'; h.textContent=g; l.append(h); }
+      const lines=n.text.trim().split('\n'), title=lines[0]||'Untitled', rest=lines.slice(1).join(' ').trim();
+      const r=document.createElement('button'); r.type='button'; r.className='nitem'+(n.pin?' pin':''); r.style.setProperty('--i',Math.min(i,8));
+      const tt=document.createElement('b'); tt.textContent=title;
+      const pv=document.createElement('span'); pv.textContent=rest||' ';
+      const wh=document.createElement('small'); wh.textContent=(n.pin?'📌 ':'')+noteWhen(n.updatedAt||n.createdAt);
+      r.append(tt,wh,pv); r.setAttribute('aria-label',(n.pin?'Pinned note: ':'Note: ')+title);
+      r.addEventListener('click',()=>{ sfx.tap(); openEditor(n); });
+      l.append(r); });
   }
+  $('nNew').addEventListener('click',()=>{ sfx.tap(); openEditor(null); });
+  $('nSearch').addEventListener('input',()=>{ nQuery=$('nSearch').value; renderNotes(); });
   function saveNote(id,data){ const col=notesCol(); if(!col){ toast('Notes can’t be saved yet.',true); return Promise.resolve(); }
     const i=notes.findIndex(x=>x.id===id); const row={...data,id}; if(i>=0) notes[i]=row; else notes.unshift(row); renderNotes();
     const {id:_,...body}=row; return write('note:'+id,()=>col.doc(id).set(body)).catch(onErr); }
@@ -954,12 +979,12 @@
   function addNote(text){ const now=Date.now(); return saveNote(uid(),{text,createdAt:now,updatedAt:now,pin:false}); }
   $('nForm').addEventListener('submit',e=>{ e.preventDefault(); const t=$('nText').value.trim(); if(!t){ $('nText').focus(); return; }
     stopListen();
-    if(nEdit){ const n=notes.find(x=>x.id===nEdit); if(n) saveNote(n.id,{...n,text:t,updatedAt:Date.now()}); nEdit=null; diNote('Note updated',short(t,40),'ok',1800); }
-    else { addNote(t); diNote('Note saved 📝',short(t,40),'ok',1800); world.say('Noted!'); }
-    sfx.add(); $('nText').value=''; try{ localStorage.removeItem('dc-ndraft'); }catch(_){} renderNotes(); });
+    if(nEdit){ const n=notes.find(x=>x.id===nEdit); if(n) saveNote(n.id,{...n,text:t,updatedAt:Date.now()}); nEdit=null; diNote('Note updated',short(t,40),'ok',1800); toast('Note updated'); }
+    else { addNote(t); diNote('Note saved 📝',short(t,40),'ok',1800); world.say('Noted!'); toast('Note saved'); try{ localStorage.removeItem('dc-ndraft'); }catch(_){} }
+    sfx.add(); $('nText').value=''; nShow('list'); });
   $('nText').addEventListener('input',()=>{ if(!nEdit){ try{ localStorage.setItem('dc-ndraft',$('nText').value); }catch(_){} } });
   $('nText').addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); $('nForm').requestSubmit(); } });
-  $('nCancel').addEventListener('click',()=>{ nEdit=null; $('nText').value=''; renderNotes(); });
+  $('nCancel').addEventListener('click',()=>{ stopListen(); nEdit=null; $('nText').value=''; nShow('list'); });
   $('nClose').addEventListener('click',()=>nsheet(false));
   $('notesBtn').addEventListener('click',()=>{ sfx.tap(); nsheet(true); });
   $('nMic').addEventListener('click',()=>{ const base=$('nText').value.replace(/\s*$/,''); let got='';

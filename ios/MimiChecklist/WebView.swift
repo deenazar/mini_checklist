@@ -41,6 +41,12 @@ struct ChecklistWebView: UIViewRepresentable {
         // Saved data: tasks, lists, water, notes, profile and vault live in a file inside the app.
         scripts.addScriptMessageHandler(NativeStore.shared, contentWorld: .page, name: NativeStore.handlerName)
 
+        // The real top safe area (status bar / Dynamic Island), in case the page reads 0 while starting.
+        let safeTop = UIApplication.shared.mimiTopViewController()?.view.window?.safeAreaInsets.top
+            ?? (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.safeAreaInsets.top ?? 0
+        scripts.addUserScript(WKUserScript(source: "window.__mimiSafeTop = \(Double(safeTop));", injectionTime: .atDocumentStart,
+                                           forMainFrameOnly: true))
+
         // Native speech recognition for the page (the mic button and “Hey Mimi”).
         let speech = context.coordinator.speech
         scripts.addUserScript(WKUserScript(source: SpeechBridge.pageScript, injectionTime: .atDocumentStart,
@@ -135,6 +141,11 @@ struct ChecklistWebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // Tell the page the real top safe area again, now that the window surely knows it.
+            if let top = webView.window?.safeAreaInsets.top, top > 0 {
+                webView.evaluateJavaScript("window.__mimiSafeTop = \(Double(top)); window.dispatchEvent(new Event('resize'));",
+                                           completionHandler: nil)
+            }
             Task { @MainActor in
                 model.error = nil
                 try? await Task.sleep(nanoseconds: 350_000_000)

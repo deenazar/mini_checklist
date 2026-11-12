@@ -180,3 +180,8 @@ html.mw-rest .ring.run,html.mw-rest .fab.ear::before,html.mw-rest .di .spin{anim
 .mw-heart{position:fixed;z-index:40;margin:-11px;font-size:20px;font-style:normal;pointer-events:none;animation:mwHeart 1.3s cubic-bezier(.2,.7,.3,1) forwards}
 @keyframes mwHeart{from{transform:scale(.4);opacity:0}15%{opacity:1;transform:scale(1)}to{transform:translate(var(--dx),-90px) scale(1.1);opacity:0}}
 @media (prefers-reduced-motion:reduce){ .mw-mimi.is-purr .mw-body,.mw-mimi.is-dizzy .mw-dizzy{animation:none} }
+
+/* "Me as Mimi": the person's face in Mimi's head; her drawn face steps aside, ears and whiskers stay. */
+.mw-me .mw-patch,.mw-me .mw-eyes-open,.mw-me .mw-eyes-happy,.mw-me .mw-eyes-sleep,.mw-me .mw-brows,
+.mw-me .mw-mouth-smile,.mw-me .mw-mouth-open,.mw-me .mw-mouth-sad,.mw-me .mw-head>path[d^="M76 79"]{opacity:0!important}
+.mw-me .mw-head>circle{opacity:.28}

@@ -4,6 +4,15 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 3.7
+
+- **Mimi’s room is back**, behind the new house button at the top of the home screen. Tap, tickle or stroke Mimi, feed her, play with yarn, dance.
+- **Me as Mimi**: in the room, tap *Me as Mimi*, pick a photo of your face, drag and zoom it to fit, and choose Cartoon or Photo. Your face then appears in Mimi’s body in the room and on the home screen. Switch back to Mimi any time. The photo stays on the iPhone (it isn’t synced). A real 3D model from a photo needs an online AI service, so this version makes a cartoon version on the phone instead.
+- **Running task on top**: the task with a running timer moves to the top of the list and is highlighted.
+- **Notes as a list**: notes open as a list with search, pinned notes first and a *+ New note* button. Tap a note to edit, pin, turn it into a task or delete it.
+- **Password manager** is listed under Upcoming release; the vault button stays hidden on the home screen.
+- Fixed: with the Dynamic Island setting off, the top buttons sometimes slid up under the status bar.
+
 ## What’s new in version 3.6
 
 - **Account first in Settings.** Settings now opens with Account & sync: Sign in with Google, and once you’re

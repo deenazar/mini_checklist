@@ -17,6 +17,8 @@
   function fit() {
     if (!probe.parentNode) document.body.appendChild(probe);
     var top = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+    // iOS can report 0 for a moment while the app starts; the app also tells us the real value.
+    if (!top && typeof window.__mimiSafeTop === 'number' && window.__mimiSafeTop > 0) top = window.__mimiSafeTop;
     // For testing layouts in a desktop browser: index.html?safeTop=59
     var forced = /[?&]safeTop=(\d{1,3})\b/.exec(location.search);
     if (forced) top = +forced[1];
@@ -33,6 +35,11 @@
   }
 
   fit();
+  // Measure again while the app settles (the safe area can arrive a moment after the page).
+  [60, 250, 700, 1500, 3000].forEach(function (ms) { setTimeout(fit, ms); });
   window.addEventListener('resize', fit);
+  window.addEventListener('pageshow', fit);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) fit(); });
   window.addEventListener('orientationchange', function () { setTimeout(fit, 250); });
 })();
