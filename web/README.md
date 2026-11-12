@@ -15,7 +15,8 @@ It is the same app as the claude.ai artifact the iPhone app opens, split into no
 | `device-fit.js` | Fits the page to the phone: full screen behind the status bar, Mimi's pill over the Dynamic Island |
 | `backup-ui.js` | Settings › Backup: export a backup file, restore one |
 | `account-ui.js` | Settings › Account & sync (iPhone app): Google sign-in and encrypted sync status |
-| `extras-ui.js` | Profile › Account (sign in / sign out), the natural-voice tip, Settings › Upcoming release |
+| `extras-ui.js` | Profile › Account (sign in / sign out), the natural-voice tip |
+| `upcoming.js`, `upcoming.css` | Settings › Upcoming release: four feature cards, each with an illustrated intro screen |
 | `landing.js`, `landing.css` | The animated welcome page (first run; open it again with `index.html?welcome`) |
 | `vendor/` | The fonts, bundled so the app works offline (licences included) |
 | `icon.png` | App icon (same as the iPhone app) |

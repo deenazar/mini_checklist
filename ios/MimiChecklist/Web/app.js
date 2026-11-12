@@ -1,5 +1,8 @@
 (function(){
   const $=id=>document.getElementById(id);
+  // Voice recognition and voice chat are coming in a later release (Settings › Upcoming release).
+  // Set to true to bring back the mic buttons, Talk to Mimi and “Hey Mimi”.
+  const VOICE_INPUT=false; window.MIMI_VOICE_INPUT=VOICE_INPUT;
   const TZ='Asia/Kolkata';
   const keyOf=d=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
   const fromKey=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(Date.UTC(y,m-1,d,6,30));};
@@ -670,7 +673,7 @@
     else if(a.type==='water'){ const ml=Math.max(10,Math.min(5000,Math.round(Number(a.ml)||250))); addWater(ml); if(!feat.water) toast('Logged '+ml+' ml of water.'); }
     else if(a.type==='focus'){ const r=runningTask(); if(r){ toast('Already focusing: '+short(r.text,30)); return; }
       const next=counted(live(tasksFor(t))).find(x=>!x.done); if(next){ if(current!==t){ current=t; render(); } start(next); } else { toast('Nothing left to focus on today 🎉'); world.react('win'); } }
-    else if(a.type==='talk'){ $('talkFab').click(); }
+    else if(a.type==='talk'){ if(VOICE_INPUT) $('talkFab').click(); else if(window.mimiSoon) window.mimiSoon.open('voicechat'); }
     else if(a.type==='summary'){ world.poke(); } }
 
   const pep=()=>{ const s=window.__s||{done:0,total:0}, left=s.total-s.done, r=runningTask();
@@ -882,9 +885,10 @@
   /* ---------- Voice input (dictation, browser speech, or the keyboard mic) ---------- */
   let dict=null;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  const canListen=()=>!!dict||!!SR;
+  const canListen=()=>VOICE_INPUT&&(!!dict||!!SR);
   const listener={ on:false, owner:null, stop:null };
   function listen(owner,{partial,final,end}){
+    if(!VOICE_INPUT) return false;
     if(listener.on){ stopListen(); return false; }
     if(typeof wakeStop==='function'&&wake.on) wakeStop();
     listener.owner=owner;
@@ -962,7 +966,7 @@
 
   /* ---------- Talk to Mimi ---------- */
   let sampler=null, chat=[], busy=false;
-  let fabOn=true; try{ fabOn=localStorage.getItem('dc-fab')!=='off'; }catch(e){}
+  let fabOn=VOICE_INPUT; try{ if(VOICE_INPUT) fabOn=localStorage.getItem('dc-fab')!=='off'; }catch(e){}
   function csheet(open){ openSheet('csheet',open); if(open){ renderChat(); } else { stopListen(); $('cMic').classList.remove('live'); } }
   function addMsg(who,text,cls){ chat.push({who,text}); if(chat.length>40) chat=chat.slice(-40); renderChat(cls); }
   function renderChat(){ const l=$('cLog'); l.textContent='';
@@ -1264,7 +1268,7 @@
   $('vbody').addEventListener('pointerdown',vIdle);
 
   /* ---------- "Hey Mimi" hands-free ---------- */
-  let wakeOn=false; try{ wakeOn=localStorage.getItem('dc-wake')==='on'; }catch(e){}
+  let wakeOn=false; try{ wakeOn=VOICE_INPUT&&localStorage.getItem('dc-wake')==='on'; }catch(e){}
   const wake={on:false,stop:null,needTap:false,blocked:false}; let armed=false, armT=0, quietUntil=0;
   const WAKE=/\b(?:hey|hi|hay|ok|okay|hello)[\s,]+(?:mimi|mimmi|mimmy|mimi's|meemee|memi|mi mi|mimee|mini|minnie|mimy)\b/i;
   function paintWake(){ $('talkFab').classList.toggle('ear',wakeOn&&wake.on); $('sWake').setAttribute('aria-checked',String(wakeOn));

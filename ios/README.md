@@ -4,6 +4,14 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 3.3
+
+- **Upcoming release, redesigned.** Settings › Upcoming release shows four cards: Smart reminders, AI features,
+  Voice recognition and Voice chat with Mimi. Tap one for its own intro screen with an illustration.
+- **Voice recognition and voice chat are paused** until that release: the mic buttons, the Talk button and
+  “Hey Mimi” are hidden (Mimi still speaks her replies). Siri’s “Talk to Mimi” opens the voice chat intro.
+  To turn voice input back on, set `VOICE_INPUT` to `true` at the top of `web/app.js`.
+
 ## What’s new in version 3.2
 
 - **Only the real Dynamic Island.** On iPhones with a Dynamic Island the app no longer draws its own island

@@ -111,22 +111,9 @@
     }
   }
 
-  // Upcoming release.
-  var up = el('div', 'sgrp upcoming');
-  up.id = 'sUpcomingGrp';
-  up.appendChild(el('h4', '', 'Upcoming release'));
-  [
-    ['⏰', 'Smart reminders', 'Snooze and mark done right from the notification, repeat reminders, and gentle nudges before your day starts.'],
-    ['✨', 'AI features', 'Mimi plans your day, breaks big tasks into small steps, and talks with you naturally.']
-  ].forEach(function (f) {
-    var r = el('div', 'srow up-row');
-    var ic = el('span', 'up-ic', f[0]);
-    var s = el('span', 'up-tx', f[1]);
-    s.appendChild(el('small', 'ssub', f[2]));
-    var tag = el('i', 'up-tag', 'Soon');
-    r.append(ic, s, tag);
-    up.appendChild(r);
-  });
-  var note = sbody.querySelector(':scope > p.wnote');
-  sbody.insertBefore(up, note || null);
+  // Voice input is in Upcoming release for now: hide its switches.
+  if (window.MIMI_VOICE_INPUT === false) {
+    ['sWake', 'sFab'].forEach(function (id) { var x = document.getElementById(id); if (x && x.closest('.srow')) x.closest('.srow').hidden = true; });
+    var fab = document.getElementById('talkFab'); if (fab) fab.hidden = true;
+  }
 })();
