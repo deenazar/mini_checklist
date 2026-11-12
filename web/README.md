@@ -17,7 +17,8 @@ It is the same app as the claude.ai artifact the iPhone app opens, split into no
 | `account-ui.js` | Settings › Account & sync (iPhone app): Google sign-in and encrypted sync status |
 | `extras-ui.js` | Profile › Account (sign in / sign out), the natural-voice tip |
 | `upcoming.js`, `upcoming.css` | Settings › Upcoming release: four feature cards, each with an illustrated intro screen |
-| `landing.js`, `landing.css` | The animated welcome page (first run; open it again with `index.html?welcome`) |
+| `play.js`, `play.css` | Mimi’s room: tap Mimi to play (touch reactions, petting, feed, yarn, dance, repeat, happiness) |
+| `landing.js`, `landing.css` | The welcome / login page: a 3-slide animated story, then sign-in (first run; open it again with `index.html?welcome`) |
 | `vendor/` | The fonts, bundled so the app works offline (licences included) |
 | `icon.png` | App icon (same as the iPhone app) |
 

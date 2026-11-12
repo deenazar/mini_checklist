@@ -55,49 +55,87 @@
     }
     root.appendChild(stars);
 
-    // Mimi with finished tasks orbiting as light, and sample cards floating around.
-    var hero = el('div', 'ld-hero');
-    var orbit = el('div', 'ld-orbit');
-    orbit.appendChild(el('i', 'ld-ring r3'));
-    orbit.appendChild(el('i', 'ld-ring'));
-    orbit.appendChild(el('i', 'ld-ring r2'));
-    orbit.appendChild(el('i', 'ld-pulse'));
-    var dots = el('div', 'ld-dots');
-    ['#FF6B4A', '#2CC4BE', '#FFC24D', '#8ED85A', '#B59CFF'].forEach(function (c, k) {
-      var d = el('i');
-      d.style.setProperty('--c', c);
-      d.style.setProperty('--a', (k * 72) + 'deg');
-      dots.appendChild(d);
+    // Brand, then a short animated story in three slides (swipe, or it moves on by itself).
+    var brand = el('div', 'ld-brand', '<span class="ld-logo">' + CAT + '</span><b>Mimi Checklist</b>');
+    root.appendChild(brand);
+
+    var SLIDES = [
+      { title: 'Plan your day', text: 'Add tasks, set a time, and tick them off one by one.', art:
+        '<svg viewBox="0 0 300 220" aria-hidden="true">' +
+        '<ellipse cx="150" cy="204" rx="96" ry="8" fill="#000" opacity=".12"/>' +
+        '<g class="sl-card"><rect x="62" y="24" width="176" height="172" rx="22" fill="#fff"/>' +
+        '<rect x="112" y="12" width="76" height="22" rx="11" fill="#FF6B4A"/>' +
+        '<g class="sl-row r1"><rect x="84" y="58" width="22" height="22" rx="7" fill="none" stroke="#2CC4BE" stroke-width="3.5"/><path class="ck" d="M89 69l5 5 9-10" fill="none" stroke="#2CC4BE" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="116" y="63" width="96" height="11" rx="5.5" fill="#E6EDF0"/></g>' +
+        '<g class="sl-row r2"><rect x="84" y="98" width="22" height="22" rx="7" fill="none" stroke="#8B5CF6" stroke-width="3.5"/><path class="ck" d="M89 109l5 5 9-10" fill="none" stroke="#8B5CF6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="116" y="103" width="78" height="11" rx="5.5" fill="#E6EDF0"/></g>' +
+        '<g class="sl-row r3"><rect x="84" y="138" width="22" height="22" rx="7" fill="none" stroke="#FF6B4A" stroke-width="3.5"/><path class="ck" d="M89 149l5 5 9-10" fill="none" stroke="#FF6B4A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="116" y="143" width="88" height="11" rx="5.5" fill="#E6EDF0"/></g></g>' +
+        '<g class="sl-pencil"><path d="M232 150 L272 110 L282 120 L242 160 Z" fill="#FFC24D" stroke="#2A2420" stroke-width="3" stroke-linejoin="round"/><path d="M232 150 L226 166 L242 160 Z" fill="#FFE2CF" stroke="#2A2420" stroke-width="3" stroke-linejoin="round"/></g>' +
+        '<g class="sl-spark" fill="#FFF"><path d="M40 50l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="M262 40l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></g></svg>' },
+      { title: 'Stay focused', text: 'Timers keep you on track, and Mimi reminds you to drink water.', art:
+        '<svg viewBox="0 0 300 220" aria-hidden="true">' +
+        '<g class="sl-timer"><circle cx="112" cy="108" r="70" fill="#fff"/><circle cx="112" cy="108" r="54" fill="none" stroke="#FFE2D8" stroke-width="12"/>' +
+        '<circle class="sl-ring" cx="112" cy="108" r="54" fill="none" stroke="#FF6B4A" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="100" transform="rotate(-90 112 108)"/>' +
+        '<text x="112" y="116" text-anchor="middle" font-family="DM Mono, monospace" font-weight="500" font-size="24" fill="#10202A">25:00</text>' +
+        '<rect x="100" y="28" width="24" height="12" rx="4" fill="#FF6B4A"/></g>' +
+        '<defs><clipPath id="slGlass"><path d="M198 70 H262 L254 186 H206 Z"/></clipPath></defs>' +
+        '<g class="sl-glass"><g clip-path="url(#slGlass)"><rect x="190" y="70" width="80" height="130" fill="#DFF1FD"/>' +
+        '<path class="sl-water" d="M180 140 Q196 130 212 140 T244 140 T276 140 T308 140 V210 H180 Z" fill="#1E8FE1"/></g>' +
+        '<path d="M198 70 H262 L254 186 H206 Z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>' +
+        '<circle class="sl-bub b1" cx="222" cy="170" r="4" fill="#fff" opacity=".7"/><circle class="sl-bub b2" cx="240" cy="176" r="3" fill="#fff" opacity=".7"/></g></svg>' },
+      { title: 'Mimi cheers you on', text: 'She celebrates every win, and plays with you too.', art:
+        '<div class="sl-mimi mw-figure">' + (window.MimiArt ? window.MimiArt.cat('landing') : CAT) + '</div>' +
+        '<div class="sl-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>' }
+    ];
+
+    var deck = el('div', 'ld-deck');
+    deck.setAttribute('role', 'region');
+    deck.setAttribute('aria-roledescription', 'carousel');
+    deck.setAttribute('aria-label', 'What Mimi Checklist does');
+    var slides = SLIDES.map(function (sd, i) {
+      var sl = el('div', 'ld-slide' + (i === 0 ? ' on' : ''));
+      sl.setAttribute('role', 'group');
+      sl.setAttribute('aria-roledescription', 'slide');
+      sl.setAttribute('aria-label', (i + 1) + ' of ' + SLIDES.length + ': ' + sd.title);
+      var art = el('div', 'ld-art', sd.art);
+      var h = el('h2', 'ld-stitle'); h.textContent = sd.title;
+      var p = el('p', 'ld-stext'); p.textContent = sd.text;
+      sl.append(art, h, p);
+      deck.appendChild(sl);
+      return sl;
     });
-    orbit.appendChild(dots);
-    orbit.appendChild(el('div', 'ld-cat', CAT));
-    hero.appendChild(orbit);
-    hero.appendChild(el('div', 'ld-card c1', '<span class="ck">' + CHECK + '</span>Morning walk'));
-    hero.appendChild(el('div', 'ld-card c2', '<span class="ic" style="background:#1E8FE1">💧</span>1.5 L of 2.5 L'));
-    hero.appendChild(el('div', 'ld-card c3', '<span class="ic">25:00</span>Focus'));
-    root.appendChild(hero);
+    var dots = el('div', 'ld-pager');
+    var dotEls = SLIDES.map(function (sd, i) {
+      var d = el('button', i === 0 ? 'on' : '');
+      d.type = 'button';
+      d.setAttribute('aria-label', 'Show slide ' + (i + 1) + ': ' + sd.title);
+      d.addEventListener('click', function () { go(i, true); });
+      dots.appendChild(d);
+      return d;
+    });
+    root.appendChild(deck);
+    root.appendChild(dots);
+
+    var cur = 0, autoT = 0;
+    function go(i, byUser) {
+      i = (i + SLIDES.length) % SLIDES.length;
+      if (i === cur) { if (byUser) auto(9000); return; } // you're looking at it: hold still a while
+      var dir = i > cur ? 1 : -1;
+      slides[cur].classList.remove('on'); slides[cur].classList.add(dir > 0 ? 'off-l' : 'off-r');
+      var old = slides[cur];
+      setTimeout(function () { old.classList.remove('off-l', 'off-r'); }, 600);
+      slides[i].classList.remove('off-l', 'off-r');
+      slides[i].style.setProperty('--from', dir > 0 ? '60px' : '-60px');
+      slides[i].classList.add('on');
+      dotEls[cur].classList.remove('on'); dotEls[i].classList.add('on');
+      cur = i;
+      if (byUser) auto(9000); else auto();
+    }
+    function auto(delay) { clearTimeout(autoT); autoT = setTimeout(function () { if (root) go(cur + 1); }, delay || 3800); }
+    auto();
+    var sx = null;
+    deck.addEventListener('pointerdown', function (e) { sx = e.clientX; });
+    deck.addEventListener('pointerup', function (e) { if (sx == null) return; var dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1), true); });
 
     var copy = el('div', 'ld-copy');
-    var title = el('h1', 'ld-title');
-    'Mimi Checklist'.split(' ').forEach(function (w, k) {
-      var sp = el('span');
-      sp.textContent = w;
-      sp.style.animationDelay = (0.15 + k * 0.14) + 's';
-      title.appendChild(sp);
-      title.appendChild(document.createTextNode(' '));
-    });
-    copy.appendChild(title);
-    var sub = el('p', 'ld-sub');
-    sub.textContent = 'Plan your day, focus with timers, drink your water. Mimi keeps you on track.';
-    copy.appendChild(sub);
-    var feats = el('ul', 'ld-feats');
-    ['Tasks & focus timers', 'Water & notes', '“Hey Mimi” voice'].forEach(function (f, k) {
-      var li = el('li');
-      li.textContent = f;
-      li.style.animationDelay = (0.8 + k * 0.1) + 's';
-      feats.appendChild(li);
-    });
-    copy.appendChild(feats);
 
     var actions = el('div', 'ld-actions');
     var delay = 1.1;

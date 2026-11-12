@@ -4,6 +4,18 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 3.5
+
+- **Mimi’s room: play with Mimi.** Tap Mimi on the home screen to open her room (a cosy illustrated room whose
+  window follows day and night). Tap her head and she giggles, tickle her belly and she laughs, tap her tail and
+  she’s grumpy, tap an ear and it twitches, stroke her and she purrs (hearts and a gentle vibration), poke her
+  lots, fast, and she gets dizzy. Buttons: **Feed** (a fish), **Yarn** (she bats a ball), **Dance**, **Repeat**
+  (she says what you said back in a squeaky voice; uses the microphone), **My day**. A happiness meter fills as you
+  play. Double-tap Mimi on the home screen for her secret dance.
+- **Welcome / login page:** a short animated story in three slides with vector illustrations (tasks being ticked
+  off, a focus timer and water filling up, Mimi cheering with confetti). Swipe, tap the dots, or let it play,
+  then Continue with Google.
+
 ## What’s new in version 3.4
 
 - **Google sign-in is set up.** The app’s Google client ID is built in (Config/App.xcconfig), so Continue with

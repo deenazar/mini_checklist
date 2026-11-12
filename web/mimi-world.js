@@ -67,6 +67,12 @@
     return e;
   }
 
+  /** Mimi's artwork with its own SVG ids (so several copies on one page never clash). */
+  function catSVG(id) {
+    return CAT.replace(/mwHead/g, 'mwHead-' + id).replace(/mwFur/g, 'mwFur-' + id);
+  }
+  window.MimiArt = { cat: catSVG };
+
   window.MimiWorld = function (opts) {
     var stage = opts.stage, bub = opts.bubble, B = opts.B || function () { return ''; };
     var reduce = !!opts.reduce;
@@ -93,13 +99,13 @@
     var scene = el('div', 'mw-scene');
     var mimi = el('button', 'mw-mimi');
     mimi.type = 'button';
-    mimi.setAttribute('aria-label', 'Mimi. Tap to hear how your day is going. Double-tap for a surprise.');
+    mimi.setAttribute("aria-label", "Mimi. Tap to play with her. Double-tap for a surprise.");
     var ring = el('div', 'mw-ring', '<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="t" cx="50" cy="50" r="46"/><circle class="f" cx="50" cy="50" r="46" pathLength="100"/></svg>');
     var orbit = el('div', 'mw-orbit');
     var zz = el('span', 'mw-zz', '<i>z</i><i>z</i><i>z</i>');
     zz.setAttribute('aria-hidden', 'true');
     var shadow = el('i', 'mw-shadow');
-    var figure = el('div', 'mw-figure', CAT);
+    var figure = el('div', 'mw-figure', catSVG('header'));
     var halo = el('i', 'mw-halo'); // the sun by day, the moon by night, behind Mimi
     mimi.append(halo, shadow, ring, orbit, figure, zz);
     var week = el('div', 'mw-week');
@@ -270,14 +276,18 @@
       double: function () {}
     };
 
-    // Tap Mimi: she tells you how the day is going; double-tap for her secret dance.
+    // Tap Mimi: open her room to play (or, without it, she tells you how the day is going).
+    // Double-tap: her secret dance.
     var lastPoke = 0;
     mimi.addEventListener('click', function () {
       var now = Date.now();
       if (now - lastPoke < 380) { lastPoke = 0; api.double(); return; }
       lastPoke = now;
       wake();
-      setTimeout(function () { if (lastPoke === now) api.poke(); }, 390);
+      setTimeout(function () {
+        if (lastPoke !== now) return;
+        if (window.mimiRoom) window.mimiRoom.open(figure); else api.poke();
+      }, 390);
     });
 
     // Battery: rest the header's endless animations 15 s after the last touch; pause everything while hidden.
