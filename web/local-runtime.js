@@ -297,6 +297,12 @@
 
   var FLAG_PREFIX = 'mimi-flag:';
 
+  // Taken right after the saved data loads and before app.js runs (this reaction is registered first), so
+  // the app's own first write (today's empty day) can't make a brand-new install look like an existing one.
+  var hadDataAtStart = ready.then(function () {
+    return store.keys().some(function (k) { return k.indexOf(DOC_PREFIX) === 0; });
+  });
+
   window.mimiLocal = {
     storage: store.kind, // 'browser' or 'app'
     /** Reads a small saved flag, or saves it when a value is given (not synced). Returns a Promise. */
@@ -310,10 +316,8 @@
     },
     /** False when the app's saved data couldn't be read (then nothing is saved either). */
     healthy: function () { return ready.then(function () { return !loadFailed; }); },
-    /** True when there is any saved checklist data on this device. */
-    hasData: function () {
-      return ready.then(function () { return store.keys().some(function (k) { return k.indexOf(DOC_PREFIX) === 0; }); });
-    },
+    /** True when there was saved checklist data on this device when the page started. */
+    hasData: function () { return hadDataAtStart; },
     /** Resolves to the backup as a JSON string. */
     exportData: function () { return ready.then(exportNow); },
     /** Adds the backup's items, replacing items with the same path. Resolves to how many were restored. */
