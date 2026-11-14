@@ -69,8 +69,8 @@
           <label class="sel psel" for="newPri"><span class="cdot" id="newPriDot"></span><b id="newPriLbl">P2</b><select id="newPri" aria-label="Priority"></select></label>
           <label class="sel" for="newMin"><span class="t">Time</span>
             <select id="newMin" aria-label="Planned time">
-              <option value="0">None</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option>
-              <option value="20">20 min</option><option value="25" selected>25 min</option><option value="30">30 min</option><option value="45">45 min</option>
+              <option value="0" selected>None</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option>
+              <option value="20">20 min</option><option value="25">25 min</option><option value="30">30 min</option><option value="45">45 min</option>
               <option value="60">1 hr</option><option value="90">1.5 hr</option><option value="120">2 hr</option><option value="180">3 hr</option><option value="240">4 hr</option>
             </select>
           </label>
@@ -138,6 +138,7 @@
       <div class="wrow"><button class="switch" id="wRemOn" type="button" role="switch" aria-checked="false"><span class="sw"></span><span>Remind me to drink</span></button></div>
       <div class="wrow"><label for="wEvery">Every</label><label class="sel"><select id="wEvery" aria-label="Remind every"></select></label></div>
       <div class="wrow"><label>Between</label><input type="time" id="wFrom" aria-label="Start reminders at"><span>and</span><input type="time" id="wTo" aria-label="Stop reminders at"></div>
+      <div class="wrow"><label for="wRing">Ringtone</label><label class="sel"><select id="wRing" aria-label="Water reminder ringtone"></select></label></div>
       <p class="wnote">Mimi reminds you with a sound, a voice and the island at the top, while this page is open. The timer restarts each time you log a drink, and reminders stop once you reach your goal.</p>
     </div>
   </div>
@@ -190,7 +191,18 @@
     <div class="sgrp"><h4>New tasks start with</h4>
       <div class="srow"><span>List</span><label class="sel"><select id="sCat" aria-label="Default list"></select></label></div>
       <div class="srow"><span>Priority</span><label class="sel"><select id="sPri" aria-label="Default priority"></select></label></div>
-      <div class="srow"><span>Planned time</span><label class="sel"><select id="sMin" aria-label="Default planned time"></select></label></div>
+      <div class="srow"><span>Planned time<small class="ssub">None means no timer for the task</small></span><label class="sel"><select id="sMin" aria-label="Default planned time"></select></label></div>
+    </div>
+    <div class="sgrp" id="sPlanGrp"><h4>Planning</h4>
+      <div class="srow"><span>Hours available per day<small class="ssub">Mimi warns you when you plan more than this</small></span><label class="sel"><select id="sCap" aria-label="Hours available per day"></select></label></div>
+    </div>
+    <div class="sgrp" id="sRingGrp"><h4>Ringtone</h4>
+      <div class="srow"><span>Task timer and reminders</span><label class="sel"><select id="sRingTask" aria-label="Task ringtone"></select></label></div>
+      <div class="srow"><span>Water reminder</span><label class="sel"><select id="sRingWater" aria-label="Water reminder ringtone"></select></label></div>
+      <button class="srow link" id="sRingPick" type="button"><span>Choose my own sound<small class="ssub" id="sRingName"></small></span><b></b></button>
+      <button class="srow link" id="sRingTest" type="button"><span>Play the task ringtone</span><b></b></button>
+      <button class="srow link" id="sRingClear" type="button"><span>Use the default ringtone</span><b></b></button>
+      <input type="file" id="sRingFile" accept="audio/*,.mp3,.m4a,.wav,.aac" hidden>
     </div>
     <div class="sgrp" id="sWaterGrp"><h4>Water</h4>
       <div class="srow"><span>Show water bar</span><button class="switch" id="sWater" type="button" role="switch" aria-checked="true" aria-label="Show water bar"><span class="sw"></span></button></div>

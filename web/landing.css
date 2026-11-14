@@ -170,3 +170,5 @@
 
 @media (max-height:700px){ .ld-art{width:min(62vw,250px)} .ld-stext{font-size:14px} .ld-deck{min-height:220px} }
 @media (prefers-reduced-motion:reduce){ .ld-slide{transition:none} .ld-slide .ck{stroke-dashoffset:0} .ld-slide .sl-ring{stroke-dashoffset:22} .ld-slide .sl-water{transform:translateY(-34px)} .sl-confetti{display:none} }
+
+.ld-guest{margin:2px 0 0;text-align:center;font:500 12px/1.4 var(--body,system-ui);color:rgba(255,255,255,.75)}
