@@ -273,7 +273,8 @@
       if(byCat.size) [...byCat.values()].sort((a,b)=>b.ms-a.ms).forEach(v=>catPart(v.c,v.ms)); else part('⏱','No time planned');
       const capMs=capHours()*3600000; if(plan>capMs) part('⚠','Over '+capHours()+'h planned','over');
       al.title='Planned time by list'+(spent?' · '+hm(spent)+' spent':'')+(left?' · '+hm(left)+' left':'');
-      const ok=diff===0&&plan>capMs; if(overState!==null&&ok&&!overState) overloadAlert(plan,capMs); overState=ok; }
+      // Track today's load only, so looking at another day and coming back doesn't alert again.
+      if(diff===0){ const ok=plan>capMs; if(overState!==null&&ok&&!overState) overloadAlert(plan,capMs); overState=ok; } }
     renderWeek();
     const list=$('list'); const prevTop=new Map(); [...list.querySelectorAll('.task')].forEach(e=>prevTop.set(e.dataset.id,e.getBoundingClientRect().top));
     const dayChanged=lastListDay!==current, dir=lastListDay&&lastListDay<current?1:-1; lastListDay=current;
@@ -911,10 +912,12 @@
       const rd=new FileReader(); rd.onload=()=>{ try{ localStorage.setItem('dc-ring-custom',String(rd.result)); localStorage.setItem('dc-ring-custom-name',f.name.slice(0,60)); }catch(e){ toast('Couldn’t save that sound. Storage is full.',true); return; }
         ringSet('task','custom'); ringSet('water','custom'); paintRings(); stopRing(); playRing('custom'); toast('Ringtone set: '+f.name.slice(0,30)); };
       rd.onerror=()=>toast('Couldn’t read that file.',true); rd.readAsDataURL(f); });
-    $('sRingClear').addEventListener('click',()=>{ try{ localStorage.removeItem('dc-ring-custom'); localStorage.removeItem('dc-ring-custom-name'); }catch(e){} ['task','water'].forEach(w=>{ if(ringGet(w)==='custom') ringSet(w,'chime'); }); paintRings(); toast('Back to the default ringtone.'); });
+    $('sRingClear').addEventListener('click',()=>{ try{ localStorage.removeItem('dc-ring-custom'); localStorage.removeItem('dc-ring-custom-name'); }catch(e){} ['task','water'].forEach(w=>ringSet(w,'chime')); paintRings(); toast('Back to the default ringtone.'); });
     paintRings();
-    const capSel=$('sCap'); fill(capSel,[2,3,4,5,6,7,8,9,10,12,14,16].map(h=>[h,h+' hours']),capHours());
+    const capSel=$('sCap'); fill(capSel,[2,3,4,5,6,7,8,9,10,12,14,16].map(h=>[h,h+' hr']),capHours());
     capSel.addEventListener('change',()=>{ setDefaults({cap:Number(capSel.value)}); sfx.tap(); overState=null; render(); syncSels(); });
+    // Same look as the other pickers (native selects otherwise show their own bold text and arrow).
+    ['sCap','sRingTask','sRingWater','wRing'].forEach(id=>overlaySel($(id))); syncSels();
   }
 
   /* water reminders: checked while the page is open */
