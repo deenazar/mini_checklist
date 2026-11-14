@@ -147,22 +147,25 @@
       gBtn.addEventListener('click', google);
       actions.appendChild(gBtn);
     }
-    var start = el('button', 'ld-btn ld-start', sync ? 'Start without an account' : 'Get started');
+    var start = el('button', 'ld-btn ld-start', 'Continue as guest');
     start.type = 'button';
     start.style.animationDelay = delay + 's';
     start.addEventListener('click', function () { finish(false); });
     actions.appendChild(start);
+    var guestNote = el('p', 'ld-guest', 'Guest: your checklist is saved on this device only.');
+    guestNote.style.animationDelay = (delay + .05) + 's';
     var restore = el('button', 'ld-link', 'I have a backup file');
     restore.type = 'button';
     restore.style.animationDelay = (delay + .1) + 's';
     restore.addEventListener('click', restoreBackup);
     actions.appendChild(restore);
     copy.appendChild(actions);
+    copy.appendChild(guestNote);
 
     statusEl = el('div', 'ld-status');
     statusEl.setAttribute('aria-live', 'polite');
     copy.appendChild(statusEl);
-    copy.appendChild(el('p', 'ld-foot', LOCK + (sync ? '<span>Encrypted with your own password before it reaches Google Drive.</span>'
+    copy.appendChild(el('p', 'ld-foot', LOCK + (sync ? '<span>Signing in encrypts your data with your own password before it reaches Google Drive.</span>'
       : '<span>Your checklist is saved on this device.</span>')));
     root.appendChild(copy);
 
@@ -233,7 +236,31 @@
     root = null;
     setTimeout(function () { r.remove(); }, 750);
     if (!synced) {
-      try { var t = document.getElementById('toast'); if (t) { t.textContent = 'Welcome! Add your first task below.'; t.classList.remove('err'); t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2800); } } catch (e) {}
+      try { var t = document.getElementById('toast'); if (t) { t.textContent = 'Welcome, guest! Your checklist is saved on this device.'; t.classList.remove('err'); t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2800); } } catch (e) {}
     }
   }
+
+  // Settings › "Show welcome page": the only way back to it on the iPhone, where you can't add ?welcome to the address.
+  (function () {
+    var body = document.querySelector('#ssheet .sbody');
+    if (!body) return;
+    var grp = el('div', 'sgrp');
+    grp.id = 'sWelcomeGrp';
+    var b = el('button', 'srow link', '');
+    b.type = 'button';
+    var sp = el('span', '', 'Show welcome page');
+    var sm = el('small', 'ssub', 'Sign in with Google or continue as a guest');
+    sp.appendChild(sm);
+    b.appendChild(sp);
+    b.appendChild(document.createElement('b'));
+    b.addEventListener('click', function () {
+      if (root) return;
+      var closeBtn = document.getElementById('sClose');
+      if (closeBtn) closeBtn.click();
+      show();
+    });
+    grp.appendChild(b);
+    var acct = document.getElementById('sAccountGrp');
+    if (acct && acct.nextSibling) body.insertBefore(grp, acct.nextSibling); else body.insertBefore(grp, body.firstElementChild);
+  })();
 })();

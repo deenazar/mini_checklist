@@ -29,6 +29,13 @@
   const PLAY='<path d="M3 1.5v10l8.5-5z"/>', PAUSE='<rect x="2" y="1.5" width="3.2" height="10" rx="1"/><rect x="7.8" y="1.5" width="3.2" height="10" rx="1"/>';
   const DOTS='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   const minLabel=m=>m>=60?(m%60?(m/60).toFixed(1).replace('.0','')+' hr':(m/60)+' hr'):m+' min';
+  /* Daily hours available (Settings › Planning). Planning more than this triggers an overload alert. */
+  function capHours(){ try{ const n=Number((JSON.parse(localStorage.getItem('dc-defaults')||'{}')||{}).cap); return n>0?n:8; }catch(e){ return 8; } }
+  let overState=null;
+  function overloadAlert(plan,capMs){ const h=ms=>Math.round(ms/360000)/10;
+    try{ toast('Overloaded: '+h(plan)+'h planned, only '+capHours()+'h available. Move something to tomorrow?',true); }catch(e){}
+    try{ diNote('⚠ Too much planned',h(plan)+'h of '+capHours()+'h','warn',5000); }catch(e){}
+    try{ playRing(ringGet('task')); }catch(e){} }
   const hm=ms=>{const m=Math.round(ms/60000);return m>=60?Math.floor(m/60)+'h'+(m%60?' '+(m%60)+'m':''):m+'m';};
   const pick=a=>a[Math.floor(Math.random()*a.length)];
   const short=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
@@ -54,6 +61,32 @@
     meow(){ tone(700,.12,'sine',.08,0,1050); tone(1000,.26,'sine',.07,.11,560); },
     whoosh(){ tone(200,.25,'sine',.04,0,500); }
   };
+  /* ---------- Ringtones (Settings › Ringtone, water screen) ---------- */
+  const RINGS=[['chime','Chime'],['bell','Bell'],['marimba','Marimba'],['beep','Digital beep'],['meow','Mimi meow'],['custom','My own sound']];
+  const RING_KEY={task:'dc-ring-task',water:'dc-ring-water'};
+  function ringGet(w){ try{ const v=localStorage.getItem(RING_KEY[w])||'chime'; return v==='custom'&&!customRing()?'chime':v; }catch(e){ return 'chime'; } }
+  function ringSet(w,v){ try{ localStorage.setItem(RING_KEY[w],v); }catch(e){} }
+  function customRing(){ try{ return localStorage.getItem('dc-ring-custom'); }catch(e){ return null; } }
+  let ringAudio=null;
+  function playRing(id){
+    if(!soundOn) return;
+    if(id==='custom'){ const u=customRing(); if(u){ try{ if(ringAudio){ ringAudio.pause(); } ringAudio=new Audio(u); ringAudio.volume=1; ringAudio.play().catch(()=>sfx.alarm()); setTimeout(()=>{ try{ ringAudio&&ringAudio.pause(); }catch(e){} },12000); return; }catch(e){} } id='chime'; }
+    const R={
+      chime:()=>sfx.alarm(),
+      bell:()=>[0,.55,1.1].forEach(d=>{ tone(880,.9,'sine',.09,d); tone(1760,.6,'sine',.04,d); }),
+      marimba:()=>[523,659,784,1047,784,659,523].forEach((f,i)=>tone(f,.28,'triangle',.09,i*.13)),
+      beep:()=>[0,.25,.5,.75].forEach(d=>tone(1000,.14,'square',.05,d)),
+      meow:()=>{ sfx.meow(); setTimeout(()=>sfx.meow(),700); }
+    };
+    (R[id]||R.chime)();
+  }
+  function stopRing(){ try{ if(ringAudio) ringAudio.pause(); }catch(e){} }
+  /* Mimi meows when the app opens (once the browser allows sound) and now and then while it stays open. */
+  let openMeowed=false;
+  function openMeow(){ if(openMeowed||!soundOn||document.hidden) return; const a=A(); if(!a||a.state!=='running') return; openMeowed=true; sfx.meow(); try{ world.react('hello'); }catch(e){} }
+  setTimeout(openMeow,1200);
+  ['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{ if(!openMeowed) setTimeout(openMeow,120); },{passive:true,capture:true}));
+  (function randomMeow(){ setTimeout(()=>{ if(soundOn&&!document.hidden&&openMeowed){ sfx.meow(); try{ world.react('hello'); }catch(e){} } randomMeow(); },(4+Math.random()*7)*60000); })();
   function paintSound(){ $('sound').classList.toggle('off',!soundOn); $('wave').style.display=soundOn?'':'none'; $('sound').setAttribute('aria-label',soundOn?'Turn sound off':'Turn sound on'); }
   $('sound').addEventListener('click',()=>{ soundOn=!soundOn; try{localStorage.setItem('dc-sound',soundOn?'on':'off');}catch(e){} paintSound(); sfx.tap(); });
   paintSound();
@@ -235,8 +268,12 @@
     $('remain').textContent=s.done+'/'+s.total;
     { const ct=counted(tasks), plan=ct.reduce((a,x)=>a+(x.est||0),0)*60000, spent=ct.reduce((a,x)=>a+elapsed(x),0), left=ct.filter(x=>!x.done).reduce((a,x)=>a+Math.max(0,(x.est||0)*60000-elapsed(x)),0), al=$('alloc'); al.textContent='';
       const part=(label,val,cls)=>{ if(al.childElementCount){ const sp=document.createElement('span'); sp.className='sep'; sp.textContent='·'; al.append(sp); } const e=document.createElement('span'); if(cls) e.className=cls; e.append(label+' '); const b=document.createElement('b'); b.textContent=val; e.append(b); al.append(e); };
-      part('⏱ Planned',plan?hm(plan):'0m'); part('Spent',hm(spent)); if(plan) part('Left',hm(left)); if(plan>12*3600000) part('⚠','Over 12h planned','over');
-      al.title='Time allocated to this day'; }
+      const byCat=new Map(); ct.forEach(x=>{ if(x.est){ const c=catOf(x); byCat.set(c.k,{c,ms:((byCat.get(c.k)||{}).ms||0)+x.est*60000}); } });
+      const catPart=(c,ms)=>{ if(al.childElementCount){ const sp=document.createElement('span'); sp.className='sep'; sp.textContent='·'; al.append(sp); } const e=document.createElement('span'); e.className='acat'; const d=document.createElement('i'); d.className='cdot'; d.style.background=c.c; e.append(d,c.n+' '); const b=document.createElement('b'); b.textContent=hm(ms); e.append(b); al.append(e); };
+      if(byCat.size) [...byCat.values()].sort((a,b)=>b.ms-a.ms).forEach(v=>catPart(v.c,v.ms)); else part('⏱','No time planned');
+      const capMs=capHours()*3600000; if(plan>capMs) part('⚠','Over '+capHours()+'h planned','over');
+      al.title='Planned time by list'+(spent?' · '+hm(spent)+' spent':'')+(left?' · '+hm(left)+' left':'');
+      const ok=diff===0&&plan>capMs; if(overState!==null&&ok&&!overState) overloadAlert(plan,capMs); overState=ok; }
     renderWeek();
     const list=$('list'); const prevTop=new Map(); [...list.querySelectorAll('.task')].forEach(e=>prevTop.set(e.dataset.id,e.getBoundingClientRect().top));
     const dayChanged=lastListDay!==current, dir=lastListDay&&lastListDay<current?1:-1; lastListDay=current;
@@ -273,13 +310,13 @@
     const row=document.createElement('div'); row.className='row';
     const ring=document.createElement('button'); ring.type='button'; ring.className='ring'+(running?' run':'')+(task.done?' idle':'');
     ring.innerHTML='<svg class="r" viewBox="0 0 44 44"><circle class="tr" cx="22" cy="22" r="19"/><circle class="fl" cx="22" cy="22" r="19" stroke-dasharray="119.4" stroke-dashoffset="119.4"/></svg><svg class="ic" viewBox="0 0 13 13">'+(running?PAUSE:PLAY)+'</svg>';
-    const noT=!!catOf(task).noTimer&&!running; if(noT){ ring.classList.add('notimer'); ring.title='Timer is off for the '+catOf(task).n+' list'; }
-    ring.disabled=ro||task.done||noT; ring.setAttribute('aria-label',noT?'Timer off for this list':(running?'Pause timer for ':ms?'Resume timer for ':'Start timer for ')+task.text);
+    const noEst=!task.est&&!running&&!ms, noT=(!!catOf(task).noTimer&&!running)||noEst; if(noT){ ring.classList.add('notimer'); ring.title=noEst&&!catOf(task).noTimer?'Set a planned time to use the timer':'Timer is off for the '+catOf(task).n+' list'; }
+    ring.disabled=ro||task.done||noT; ring.setAttribute('aria-label',noT?(noEst?'Timer off: no planned time':'Timer off for this list'):(running?'Pause timer for ':ms?'Resume timer for ':'Start timer for ')+task.text);
     ring.addEventListener('click',()=>running?pause(task):start(task));
     const body=document.createElement('div'); body.className='body';
     const tt=document.createElement('span'); tt.className='tt'; tt.textContent=task.text; body.append(tt);
     const meta=document.createElement('div'); meta.className='meta';
-    const tm=document.createElement('span'); tm.className='tm'; tm.dataset.timer=task.id; if(!(catOf(task).noTimer&&!running&&!ms)) meta.append(tm);
+    const tm=document.createElement('span'); tm.className='tm'; tm.dataset.timer=task.id; if(!((catOf(task).noTimer||!task.est)&&!running&&!ms)) meta.append(tm);
     const tag=(c,x)=>{const g=document.createElement('span');g.className='tag '+c;g.textContent=x;meta.append(g);};
     { const c=catOf(task); const g=document.createElement('span'); g.className='tag cat'+(c.noCount?' nc':''); if(c.noCount) g.title='Not counted in progress'; const d=document.createElement('i'); d.className='cdot'; d.style.background=c.c; g.append(d,c.n); meta.append(g); }
     if(task.remind&&task.remind.at){ const g=document.createElement('span'); g.className='tag rem'+(task.remind.fired?' fired':''); g.innerHTML=BELL; g.append(fmtAt(task.remind.at)+(task.remind.before?' · '+task.remind.before+'m early':'')); g.title='Reminder'; meta.append(g); }
@@ -336,7 +373,7 @@
     if(tm){ tm.textContent=est?(over?'+'+clock(ms-est)+' over':(ms?clock(est-ms)+' left':minLabel(task.est))):(ms?clock(ms)+' spent':'No time set');
       tm.classList.toggle('run',running&&!over); tm.classList.toggle('over',!!over); }
     if(ring){ const f=est?Math.min(1,ms/est):(ms?1:0); ring.querySelector('.fl').setAttribute('stroke-dashoffset',String(119.4*(1-f))); ring.classList.toggle('over',!!over); }
-    if(over&&running&&!alarmed.has(task.id)){ alarmed.add(task.id); sfx.alarm(); diNote('Time’s up',task.text,'warn',4500); speak(L('timeup',task.text)); }
+    if(over&&running&&!alarmed.has(task.id)){ alarmed.add(task.id); playRing(ringGet('task')); diNote('Time’s up',task.text,'warn',4500); speak(L('timeup',task.text)); }
   }
   function runningTask(){ for(const k of [todayKey(),current]){ const t=tasksFor(k).find(x=>x.timer&&x.timer.since&&!x.movedTo); if(t) return t; } return null; }
   /* ---------- Dynamic Island ---------- */
@@ -390,7 +427,7 @@
   document.addEventListener('pointerdown',e=>{ if(diBig&&!di.contains(e.target)) diClose(); });
   function updateIsland(){ diCompact(); const run=!!runningTask(); if(diBig&&diWasRun!==null&&run!==diWasRun) diExpanded(); diWasRun=run; diTick();
     const r=runningTask(); if(r&&!document.querySelector('.task[data-id="'+CSS.escape(r.id)+'"]')){ const est=(r.est||0)*60000, ms=elapsed(r);
-      if(est&&ms>est&&!alarmed.has(r.id)){ alarmed.add(r.id); sfx.alarm(); diNote('Time’s up',r.text,'warn',4500); speak(L('timeup',r.text)); } } }
+      if(est&&ms>est&&!alarmed.has(r.id)){ alarmed.add(r.id); playRing(ringGet('task')); diNote('Time’s up',r.text,'warn',4500); speak(L('timeup',r.text)); } } }
 
   function updateFocus(){ const r=runningTask(); world.focus(!!r);
     if(r){ const ms=elapsed(r), est=(r.est||0)*60000; world.setTimer(est?ms/est:((ms/60000)%60)/60, est&&ms>est); } else world.setTimer(null); }
@@ -628,7 +665,7 @@
       if(now-at<3*3600000) fireReminder(t);
       if(canWrite&&db) mutate(k,ts=>ts.map(x=>x.id===t.id&&x.remind?{...x,remind:{...x.remind,fired:true}}:x)); }); }); }
   function fireReminder(t){ const b=t.remind.before||0;
-    [0,.9,1.8].forEach(d=>setTimeout(()=>{ tone(880,.16,'sine',.12); tone(1320,.16,'sine',.08,.18); tone(1760,.24,'sine',.06,.36); },d*1000));
+    if(ringGet('task')==='chime') [0,.9,1.8].forEach(d=>setTimeout(()=>{ tone(880,.16,'sine',.12); tone(1320,.16,'sine',.08,.18); tone(1760,.24,'sine',.06,.36); },d*1000)); else playRing(ringGet('task'));
     world.react('alarm'); world.say('⏰ '+short(t.text,20),5000);
     diNote('⏰ Reminder',t.text+' · '+(b?'starts in '+b+' min':'now'),'warn',8000);
     toast('Reminder: '+t.text+(b?' at '+fmtAt(t.remind.at):''));
@@ -860,6 +897,26 @@
   $('wFrom').addEventListener('change',()=>{ if($('wFrom').value) saveWset({remind:{from:$('wFrom').value}}); });
   $('wTo').addEventListener('change',()=>{ if($('wTo').value) saveWset({remind:{to:$('wTo').value}}); });
 
+  /* ringtone pickers: Settings page and water screen */
+  { const nm=()=>{ try{ return localStorage.getItem('dc-ring-custom-name')||''; }catch(e){ return ''; } };
+    const paintRingName=()=>{ const e=$('sRingName'); if(e) e.textContent=customRing()?nm()||'Your sound':'No file chosen. MP3, M4A or WAV, up to 700 KB.'; };
+    const opts=()=>RINGS.filter(r=>r[0]!=='custom'||customRing());
+    const paintRings=()=>{ [['sRingTask','task'],['sRingWater','water'],['wRing','water']].forEach(([id,w])=>{ const s=$(id); if(s) fill(s,opts(),ringGet(w)); }); paintRingName(); syncSels(); };
+    [['sRingTask','task'],['sRingWater','water'],['wRing','water']].forEach(([id,w])=>{ const s=$(id); if(!s) return; s.addEventListener('change',()=>{ ringSet(w,s.value); paintRings(); stopRing(); playRing(s.value); }); });
+    $('sRingTest').addEventListener('click',()=>{ stopRing(); playRing(ringGet('task')); });
+    $('sRingPick').addEventListener('click',()=>{ $('sRingFile').value=''; $('sRingFile').click(); });
+    $('sRingFile').addEventListener('change',()=>{ const f=$('sRingFile').files&&$('sRingFile').files[0]; if(!f) return;
+      if(!/^audio\//.test(f.type)&&!/\.(mp3|m4a|wav|aac|ogg|caf)$/i.test(f.name)){ toast('Please choose an audio file.',true); return; }
+      if(f.size>700*1024){ toast('That sound is too big. Choose one under 700 KB.',true); return; }
+      const rd=new FileReader(); rd.onload=()=>{ try{ localStorage.setItem('dc-ring-custom',String(rd.result)); localStorage.setItem('dc-ring-custom-name',f.name.slice(0,60)); }catch(e){ toast('Couldn’t save that sound. Storage is full.',true); return; }
+        ringSet('task','custom'); ringSet('water','custom'); paintRings(); stopRing(); playRing('custom'); toast('Ringtone set: '+f.name.slice(0,30)); };
+      rd.onerror=()=>toast('Couldn’t read that file.',true); rd.readAsDataURL(f); });
+    $('sRingClear').addEventListener('click',()=>{ try{ localStorage.removeItem('dc-ring-custom'); localStorage.removeItem('dc-ring-custom-name'); }catch(e){} ['task','water'].forEach(w=>{ if(ringGet(w)==='custom') ringSet(w,'chime'); }); paintRings(); toast('Back to the default ringtone.'); });
+    paintRings();
+    const capSel=$('sCap'); fill(capSel,[2,3,4,5,6,7,8,9,10,12,14,16].map(h=>[h,h+' hours']),capHours());
+    capSel.addEventListener('change',()=>{ setDefaults({cap:Number(capSel.value)}); sfx.tap(); overState=null; render(); syncSels(); });
+  }
+
   /* water reminders: checked while the page is open */
   let wLastNudge=Date.now();
   try{ const s=Number(localStorage.getItem('dc-wnudge')); if(s>wLastNudge-6*3600000) wLastNudge=Math.max(s,Date.now()-3600000); }catch(e){}
@@ -870,7 +927,7 @@
     const lastLog=wLogs(k).reduce((a,l)=>Math.max(a,l.t||0),0), every=(r.every||60)*60000;
     if(Date.now()-Math.max(lastLog,wLastNudge)<every) return;
     wLastNudge=Date.now(); try{ localStorage.setItem('dc-wnudge',String(wLastNudge)); }catch(e){}
-    [0,.8].forEach(d=>setTimeout(()=>{ tone(660,.18,'sine',.1); tone(990,.22,'sine',.07,.16); },d*1000));
+    if(ringGet('water')==='chime') [0,.8].forEach(d=>setTimeout(()=>{ tone(660,.18,'sine',.1); tone(990,.22,'sine',.07,.16); },d*1000)); else playRing(ringGet('water'));
     world.react('alarm'); world.say('💧 Drink some water!',5000);
     diNote('💧 Time to drink water',wFmt(tot)+' of '+wFmt(goal)+' · '+wFmt(goal-tot)+' to go','warn',8000);
     toast('Water reminder: '+wFmt(goal-tot)+' to go today');
@@ -1094,7 +1151,7 @@
   let theme='auto'; try{ theme=localStorage.getItem('dc-theme')||'auto'; }catch(e){} applyTheme(theme);
   fill($('sCat'),CATS.map(c=>[c.k,c.n]),defaults().cat||'personal');
   fill($('sPri'),PRIS.map(q=>[q.p,q.p+' · '+q.n]),defaults().pri||2);
-  fill($('sMin'),[...$('newMin').options].map(o=>[o.value,o.textContent]),defaults().min!=null?defaults().min:25);
+  fill($('sMin'),[...$('newMin').options].map(o=>[o.value,o.textContent]),defaults().min!=null?defaults().min:0);
   ['sCat','sPri','sMin'].forEach(id=>overlaySel($(id)));
   { const d=defaults(); if(d.pri){ $('newPri').value=String(d.pri); paintPriDot(); } if(d.min!=null){ $('newMin').value=String(d.min); } if(d.cat){ $('newCat').value=d.cat; paintCatDot(); } syncSels(); }
   function ssheet(open){ openSheet('ssheet',open); if(open) renderSettings(); }
@@ -1154,7 +1211,7 @@
     const c=CATS.find(x=>x.k===$('newCat').value)||{};
     $('newPri').closest('label').hidden=!!c.noPri;
     $('newMin').closest('label').hidden=!!c.noTimer; if(c.noTimer){ $('newMin').value='0'; }
-    else if($('newMin').value==='0'){ const d=defaults(); $('newMin').value=String(d.min!=null?d.min:25); }
+    else if($('newMin').value==='0'){ const d=defaults(); $('newMin').value=String(d.min!=null?d.min:0); }
     $('remBtn').hidden=!!c.noRemind; if(c.noRemind){ $('newAt').value=''; setRem(false); }
     $('dailyToggle').hidden=!!c.noDaily; if(c.noDaily) setDaily(false);
     syncSels(); return c; }

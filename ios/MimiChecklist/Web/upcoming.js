@@ -179,8 +179,10 @@
     var ic = el('span', 'up2-ic', f.icon);
     ic.setAttribute('aria-hidden', 'true');
     c.appendChild(ic);
-    c.appendChild(el('b', '', f.title));
-    c.appendChild(el('small', '', f.line));
+    var tx = el('span', 'up2-tx');
+    tx.appendChild(el('b', '', f.title));
+    tx.appendChild(el('small', '', f.line));
+    c.appendChild(tx);
     c.appendChild(el('i', 'up2-tag', 'Soon'));
     c.addEventListener('click', function () { open(f.id); });
     grid.appendChild(c);

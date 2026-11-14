@@ -62,3 +62,10 @@
 @keyframes sWave{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes sBar{to{transform:scaleY(.45)}}
 @media (prefers-reduced-motion:reduce){ .soon,.soon *,.up2-card{animation:none!important;transition:none!important} .soon-points li{opacity:1} }
+
+/* Settings › Upcoming release as a list */
+.up2-grid{grid-template-columns:1fr;gap:8px}
+.up2-card{flex-direction:row;align-items:center;gap:12px;min-height:0;padding:10px 12px;border-radius:16px}
+.up2-card .up2-ic{margin-bottom:0;flex:none}
+.up2-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.up2-tag{position:static;margin-left:auto;flex:none}
