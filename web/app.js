@@ -914,8 +914,10 @@
       rd.onerror=()=>toast('Couldn’t read that file.',true); rd.readAsDataURL(f); });
     $('sRingClear').addEventListener('click',()=>{ try{ localStorage.removeItem('dc-ring-custom'); localStorage.removeItem('dc-ring-custom-name'); }catch(e){} ['task','water'].forEach(w=>ringSet(w,'chime')); paintRings(); toast('Back to the default ringtone.'); });
     paintRings();
-    const capSel=$('sCap'); fill(capSel,[2,3,4,5,6,7,8,9,10,12,14,16].map(h=>[h,h+' hours']),capHours());
+    const capSel=$('sCap'); fill(capSel,[2,3,4,5,6,7,8,9,10,12,14,16].map(h=>[h,h+' hr']),capHours());
     capSel.addEventListener('change',()=>{ setDefaults({cap:Number(capSel.value)}); sfx.tap(); overState=null; render(); syncSels(); });
+    // Same look as the other pickers (native selects otherwise show their own bold text and arrow).
+    ['sCap','sRingTask','sRingWater','wRing'].forEach(id=>overlaySel($(id))); syncSels();
   }
 
   /* water reminders: checked while the page is open */
