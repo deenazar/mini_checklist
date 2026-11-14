@@ -912,7 +912,7 @@
       const rd=new FileReader(); rd.onload=()=>{ try{ localStorage.setItem('dc-ring-custom',String(rd.result)); localStorage.setItem('dc-ring-custom-name',f.name.slice(0,60)); }catch(e){ toast('Couldn’t save that sound. Storage is full.',true); return; }
         ringSet('task','custom'); ringSet('water','custom'); paintRings(); stopRing(); playRing('custom'); toast('Ringtone set: '+f.name.slice(0,30)); };
       rd.onerror=()=>toast('Couldn’t read that file.',true); rd.readAsDataURL(f); });
-    $('sRingClear').addEventListener('click',()=>{ try{ localStorage.removeItem('dc-ring-custom'); localStorage.removeItem('dc-ring-custom-name'); }catch(e){} ['task','water'].forEach(w=>{ if(ringGet(w)==='custom') ringSet(w,'chime'); }); paintRings(); toast('Back to the default ringtone.'); });
+    $('sRingClear').addEventListener('click',()=>{ try{ localStorage.removeItem('dc-ring-custom'); localStorage.removeItem('dc-ring-custom-name'); }catch(e){} ['task','water'].forEach(w=>ringSet(w,'chime')); paintRings(); toast('Back to the default ringtone.'); });
     paintRings();
     const capSel=$('sCap'); fill(capSel,[2,3,4,5,6,7,8,9,10,12,14,16].map(h=>[h,h+' hours']),capHours());
     capSel.addEventListener('change',()=>{ setDefaults({cap:Number(capSel.value)}); sfx.tap(); overState=null; render(); syncSels(); });
