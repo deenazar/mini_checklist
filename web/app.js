@@ -273,7 +273,8 @@
       if(byCat.size) [...byCat.values()].sort((a,b)=>b.ms-a.ms).forEach(v=>catPart(v.c,v.ms)); else part('⏱','No time planned');
       const capMs=capHours()*3600000; if(plan>capMs) part('⚠','Over '+capHours()+'h planned','over');
       al.title='Planned time by list'+(spent?' · '+hm(spent)+' spent':'')+(left?' · '+hm(left)+' left':'');
-      const ok=diff===0&&plan>capMs; if(overState!==null&&ok&&!overState) overloadAlert(plan,capMs); overState=ok; }
+      // Track today's load only, so looking at another day and coming back doesn't alert again.
+      if(diff===0){ const ok=plan>capMs; if(overState!==null&&ok&&!overState) overloadAlert(plan,capMs); overState=ok; } }
     renderWeek();
     const list=$('list'); const prevTop=new Map(); [...list.querySelectorAll('.task')].forEach(e=>prevTop.set(e.dataset.id,e.getBoundingClientRect().top));
     const dayChanged=lastListDay!==current, dir=lastListDay&&lastListDay<current?1:-1; lastListDay=current;
