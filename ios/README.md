@@ -11,6 +11,9 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 - **Day picker**: smaller text that always fits inside each day, with today’s pill in lavender.
 - **Empty day**: plush Mimi with an “Add your first task” button (the plan card shows up once there are tasks).
 - The date at the top sits in a soft glass pill so it reads on every sky, and new tasks pop in.
+- **Dynamic Island and Lock Screen timer** now count DOWN the time left on the plan (25:00, 24:59 …), the same as the app. When the plan runs out they say “Time’s up” and show the extra time (+0:12). Tasks without a planned time still count up.
+- **Lighter, cleaner type** (DM Sans for text, Fredoka only for headings, at lighter weights) and **flat buttons** that gently shrink when pressed.
+- **More motion**: the screen settles in piece by piece, ticking a task pops a little confetti, the bottom bar icons bounce when tapped, the plan card’s progress bar shines and the water drop wobbles.
 
 ## What’s new in version 4.0: the Lilac look
 

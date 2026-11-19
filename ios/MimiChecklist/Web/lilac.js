@@ -121,6 +121,25 @@
     if (c) { var r = c.getBoundingClientRect(); splash(r.left + r.width / 2, r.top + r.height / 2, ''); buzz(20); }
   });
 
+  /* ---------- A little confetti pop when you tick a task ---------- */
+  doc.addEventListener('click', function (e) {
+    var c = e.target.closest && e.target.closest('.task .chk');
+    if (!c || reduce) return;
+    var task = c.closest('.task');
+    if (task && task.classList.contains('done')) return; // un-ticking: no party
+    var r = c.getBoundingClientRect(), b = el('div', 'lburst'), cols = ['#B4A0FF', '#7FE3B8', '#FFC94D', '#FF7A59', '#FF8FB1'];
+    b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = (r.top + r.height / 2) + 'px';
+    for (var i = 0; i < 12; i++) {
+      var d = el('i'), a = i / 12 * Math.PI * 2, rr = 26 + Math.random() * 18;
+      d.style.setProperty('--c', cols[i % 5]);
+      d.style.setProperty('--x', (Math.cos(a) * rr).toFixed(0) + 'px');
+      d.style.setProperty('--y', (Math.sin(a) * rr).toFixed(0) + 'px');
+      b.appendChild(d);
+    }
+    doc.body.appendChild(b);
+    setTimeout(function () { b.remove(); }, 750);
+  }, true);
+
   /* ---------- Bottom bar ---------- */
   var nav = el('nav', 'lnav');
   nav.setAttribute('aria-label', 'Main');
@@ -137,7 +156,7 @@
     b.type = 'button';
     b.dataset.k = n[1];
     if (i === 0) b.setAttribute('aria-current', 'page');
-    b.addEventListener('click', function () { buzz(10); n[3](); });
+    b.addEventListener('click', function () { buzz(10); b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); n[3](); });
     nav.appendChild(b);
   });
   doc.body.appendChild(nav);
@@ -199,6 +218,7 @@
       pGo.innerHTML = 'Start next task ' + ICON.play;
       planAction = function () { A.focusNext(); setTimeout(function () { if (A.running()) openFocus(); }, 250); };
     }
+    if (planSig && planSig !== sig && !reduce) { plan.classList.remove('bump'); void plan.offsetWidth; plan.classList.add('bump'); }
     planSig = sig;
     pBar.style.width = (d.total ? d.pct : 0) + '%';
   }

@@ -39,8 +39,10 @@ final class LiveActivityController {
     }
 
     private func start(taskId: String, state: MimiTimerAttributes.ContentState) {
-        // Stale a few hours after it should have ended, so iOS dims a forgotten timer.
-        let stale = (state.plannedEnd ?? state.startedAt).addingTimeInterval(4 * 3600)
+        // With a plan, the activity goes stale right when the plan runs out, so iOS redraws it and the
+        // Dynamic Island switches from the countdown to the extra time (+0:12). Without a plan, a few hours on,
+        // so iOS dims a forgotten timer.
+        let stale = state.plannedEnd ?? state.startedAt.addingTimeInterval(4 * 3600)
         let content = ActivityContent(state: state, staleDate: stale)
 
         if let activity = current, activity.attributes.taskId == taskId, activity.activityState == .active {

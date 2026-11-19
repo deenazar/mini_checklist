@@ -4,6 +4,8 @@ import WidgetKit
 
 /// The running task timer in the Dynamic Island and on the Lock Screen.
 /// Times are drawn with SwiftUI's live timer views, so they keep counting while the app is closed.
+/// With a planned time it counts DOWN the time left, like the app does (25:00, 24:59 …); when the plan runs out
+/// (the activity goes stale at the planned end), it shows the extra time as +0:12. Without a plan it counts up.
 struct MimiTimerLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MimiTimerAttributes.self) { context in
@@ -12,6 +14,7 @@ struct MimiTimerLiveActivity: Widget {
                 .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
             let state = context.state
+            let stale = context.isStale
             let tint = Color(hex: state.colorHex) ?? .mimiCoral
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -19,7 +22,7 @@ struct MimiTimerLiveActivity: Widget {
                         .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    ElapsedText(state: state)
+                    TimerText(state: state, stale: stale)
                         .font(.system(size: 26, weight: .semibold, design: .rounded).monospacedDigit())
                         .foregroundStyle(Color.mimiCoral)
                         .frame(maxWidth: 110, alignment: .trailing)
@@ -27,7 +30,7 @@ struct MimiTimerLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("FOCUSING")
+                        Text(timesUp(state, stale) ? "TIME’S UP" : "FOCUSING")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(.secondary)
                         Text(state.title)
@@ -57,7 +60,7 @@ struct MimiTimerLiveActivity: Widget {
             } compactLeading: {
                 MimiBadge(size: 22)
             } compactTrailing: {
-                ElapsedText(state: state)
+                TimerText(state: state, stale: stale)
                     .font(.system(size: 13, weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(Color.mimiCoral)
                     .frame(maxWidth: 52)
@@ -81,7 +84,7 @@ private struct LockScreenTimerView: View {
             HStack(spacing: 12) {
                 MimiBadge(size: 40)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(stale ? "STILL RUNNING?" : "FOCUSING")
+                    Text(timesUp(state, stale) ? "TIME’S UP" : stale ? "STILL RUNNING?" : "FOCUSING")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.6))
                     Text(state.title)
@@ -90,7 +93,7 @@ private struct LockScreenTimerView: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 8)
-                ElapsedText(state: state)
+                TimerText(state: state, stale: stale)
                     .font(.system(size: 28, weight: .semibold, design: .rounded).monospacedDigit())
                     .foregroundStyle(Color.mimiCoral)
                     .multilineTextAlignment(.trailing)
@@ -113,12 +116,31 @@ private struct LockScreenTimerView: View {
     }
 }
 
-/// Time spent so far, counting up live (e.g. 12:34, then 1:02:03).
-private struct ElapsedText: View {
+/// The live time: time left on the plan (counting down), then the extra time as "+m:ss";
+/// without a plan, the time spent so far (counting up).
+private struct TimerText: View {
     let state: MimiTimerAttributes.ContentState
+    let stale: Bool
     var body: some View {
-        Text(timerInterval: state.startedAt...Date.distantFuture, countsDown: false, showsHours: true)
+        if let end = state.plannedEnd, end > state.startedAt {
+            if timesUp(state, stale) {
+                HStack(spacing: 0) {
+                    Text("+")
+                    Text(timerInterval: end...Date.distantFuture, countsDown: false, showsHours: true)
+                }
+            } else {
+                Text(timerInterval: state.startedAt...end, countsDown: true, showsHours: true)
+            }
+        } else {
+            Text(timerInterval: state.startedAt...Date.distantFuture, countsDown: false, showsHours: true)
+        }
     }
+}
+
+/// True once a planned timer has run past its plan.
+private func timesUp(_ state: MimiTimerAttributes.ContentState, _ stale: Bool) -> Bool {
+    guard let end = state.plannedEnd else { return false }
+    return stale || end <= Date()
 }
 
 /// Progress through the planned time, filling live; a calm full bar when there is no plan.
