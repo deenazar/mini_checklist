@@ -182,6 +182,6 @@ html.mw-rest .ring.run,html.mw-rest .fab.ear::before,html.mw-rest .di .spin{anim
 @media (prefers-reduced-motion:reduce){ .mw-mimi.is-purr .mw-body,.mw-mimi.is-dizzy .mw-dizzy{animation:none} }
 
 /* "Me as Mimi": the person's face in Mimi's head; her drawn face steps aside, ears and whiskers stay. */
-.mw-me .mw-patch,.mw-me .mw-eyes-open,.mw-me .mw-eyes-happy,.mw-me .mw-eyes-sleep,.mw-me .mw-brows,
+.mw-me .mw-gloss,.mw-me .mw-patch,.mw-me .mw-eyes-open,.mw-me .mw-eyes-happy,.mw-me .mw-eyes-sleep,.mw-me .mw-brows,
 .mw-me .mw-mouth-smile,.mw-me .mw-mouth-open,.mw-me .mw-mouth-sad,.mw-me .mw-head>path[d^="M76 79"]{opacity:0!important}
 .mw-me .mw-head>circle{opacity:.28}

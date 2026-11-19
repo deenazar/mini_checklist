@@ -260,7 +260,7 @@
     $('todayBtn').hidden=diff===0;
     const tasks=tasksFor(current), s=stats(tasks); window.__s=s;
     const full=s.total>0&&s.done===s.total;
-    if(wasFull===false&&full&&diff===0) sfx.win();
+    if(wasFull===false&&full&&diff===0){ sfx.win(); try{ window.dispatchEvent(new CustomEvent('mimi-all-done',{detail:{done:s.done,total:s.total}})); }catch(e){} }
     wasFull=full;
     world.setDone(diff===0?s.done:0);
     $('listTitle').textContent=diff===0?'Today':fmt(current,{day:'numeric',month:'short'});
@@ -717,6 +717,21 @@
       const next=counted(live(tasksFor(t))).find(x=>!x.done); if(next){ if(current!==t){ current=t; render(); } start(next); } else { toast('Nothing left to focus on today 🎉'); world.react('win'); } }
     else if(a.type==='talk'){ if(VOICE_INPUT) $('talkFab').click(); else if(window.mimiSoon) window.mimiSoon.open('voicechat'); }
     else if(a.type==='summary'){ world.poke(); } }
+
+  /* A small read-only view of today, plus a few actions, for the focus screen and the day-complete screen (lilac.js). */
+  window.mimiApp={
+    running(){ const r=runningTask(); return r?{id:r.id,text:r.text,elapsed:elapsed(r),est:(r.est||0)*60000,done:!!r.done}:null; },
+    task(id){ const x=tasksFor(todayKey()).find(y=>y.id===id); return x?{id:x.id,text:x.text,elapsed:elapsed(x),est:(x.est||0)*60000,done:!!x.done,running:!!(x.timer&&x.timer.since)}:null; },
+    today(){ const t=todayKey(), s=stats(tasksFor(t)); const next=counted(live(tasksFor(t))).find(x=>!x.done);
+      return {done:s.done,total:s.total,pct:s.pct,focusMs:focusMs(t),next:next?next.text:'',ready:!!(db&&daysReady)}; },
+    week(){ const t=todayKey(), out=[]; for(let i=6;i>=0;i--){ const k=shift(t,-i), s=stats(tasksFor(k)); out.push({label:fmt(k,{weekday:'narrow'}),total:s.total,done:s.done,pct:s.pct,today:i===0}); } return out; },
+    streak(){ return parseInt($('stStreak').textContent,10)||0; },
+    focusNext(){ runAction({type:'focus'}); },
+    pause(){ const r=runningTask(); if(!r) return; const t=todayKey(); if(current!==t){ current=t; render(); } pause(r); },
+    resume(id){ const t=todayKey(); if(current!==t){ current=t; render(); } const x=tasksFor(t).find(y=>y.id===id); if(x&&!x.done) start(x); },
+    finish(id){ const t=todayKey(); if(current!==t){ current=t; render(); } const x=tasksFor(t).find(y=>y.id===id); if(x&&!x.done) toggleDone(x); },
+    goToday(){ const t=todayKey(); if(current!==t){ current=t; weekEnd=t; render(); } }
+  };
 
   const pep=()=>{ const s=window.__s||{done:0,total:0}, left=s.total-s.done, r=runningTask();
     if(r) return 'Stay focused on “'+short(r.text,18)+'”!';

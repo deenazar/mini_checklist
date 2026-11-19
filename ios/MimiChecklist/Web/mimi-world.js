@@ -14,43 +14,49 @@
 (function () {
   'use strict';
 
+  // Mimi, soft "plush" style: no outlines, gentle shading, glossy eyes. The class names are the hooks for her moods,
+  // blinking, ear twitches and the "Me as Mimi" face, so they stay the same.
   var CAT = '' +
     '<svg class="mw-cat" viewBox="0 0 160 176" aria-hidden="true">' +
     '<defs><clipPath id="mwHead"><ellipse cx="80" cy="66" rx="48" ry="40"/></clipPath>' +
-    '<radialGradient id="mwFur" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#FFFDF9"/><stop offset="1" stop-color="#FFEBD8"/></radialGradient></defs>' +
+    '<radialGradient id="mwFur" cx="38%" cy="28%" r="78%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#FFF3E7"/><stop offset=".82" stop-color="#F8D6BC"/><stop offset="1" stop-color="#E6AE8E"/></radialGradient>' +
+    '<radialGradient id="mwFurOr" cx="35%" cy="25%" r="85%"><stop offset="0" stop-color="#FFC08F"/><stop offset=".6" stop-color="#FF9A5E"/><stop offset="1" stop-color="#E5703A"/></radialGradient>' +
+    '<radialGradient id="mwFurEye" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#4A3A6E"/><stop offset=".55" stop-color="#1E1530"/><stop offset="1" stop-color="#0B0712"/></radialGradient>' +
+    '<radialGradient id="mwFurGl"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="mwFurBl"><stop offset="0" stop-color="#FF8FA8" stop-opacity=".75"/><stop offset="1" stop-color="#FF8FA8" stop-opacity="0"/></radialGradient>' +
+    '<radialGradient id="mwFurBell" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#FFF0B0"/><stop offset="1" stop-color="#E9A21F"/></radialGradient></defs>' +
     // tail
-    '<g class="mw-tail"><path d="M116 146 C150 140 156 104 136 90" fill="none" stroke="#2A2420" stroke-width="17" stroke-linecap="round"/>' +
-    '<path d="M116 146 C150 140 156 104 136 90" fill="none" stroke="url(#mwFur)" stroke-width="11" stroke-linecap="round"/>' +
-    '<path d="M141 104 C146 96 142 92 136 90" fill="none" stroke="#FF9F6E" stroke-width="11" stroke-linecap="round"/></g>' +
+    '<g class="mw-tail"><path d="M114 148 C152 146 158 106 136 90" fill="none" stroke="url(#mwFur)" stroke-width="15" stroke-linecap="round"/>' +
+    '<path d="M141 101 C140 95 139 93 136 90" fill="none" stroke="url(#mwFurOr)" stroke-width="15" stroke-linecap="round"/></g>' +
     // body
-    '<g class="mw-body"><ellipse cx="80" cy="130" rx="42" ry="36" fill="url(#mwFur)" stroke="#2A2420" stroke-width="3"/>' +
-    '<ellipse cx="80" cy="138" rx="24" ry="20" fill="#FFFFFF"/>' +
-    '<ellipse class="mw-paw l" cx="64" cy="162" rx="12" ry="8" fill="url(#mwFur)" stroke="#2A2420" stroke-width="3"/>' +
-    '<g class="mw-wave"><ellipse cx="96" cy="162" rx="12" ry="8" fill="url(#mwFur)" stroke="#2A2420" stroke-width="3"/></g>' +
-    '<path d="M54 106 Q80 120 106 106" fill="none" stroke="#FF6B4A" stroke-width="6" stroke-linecap="round"/>' +
-    '<circle class="mw-bell" cx="80" cy="116" r="5.5" fill="#FFC24D" stroke="#2A2420" stroke-width="2"/></g>' +
+    '<g class="mw-body"><ellipse cx="80" cy="130" rx="42" ry="37" fill="url(#mwFur)"/>' +
+    '<ellipse cx="80" cy="139" rx="24" ry="21" fill="#FFFDFA" opacity=".92"/>' +
+    '<ellipse class="mw-paw l" cx="63" cy="162" rx="14" ry="9" fill="url(#mwFur)"/>' +
+    '<g class="mw-wave"><ellipse cx="97" cy="162" rx="14" ry="9" fill="url(#mwFur)"/><ellipse cx="97" cy="159" rx="5" ry="2.6" fill="#FFB8C6" opacity=".6"/></g>' +
+    '<path d="M50 102 Q80 120 110 102" fill="none" stroke="#FF7A59" stroke-width="7" stroke-linecap="round"/>' +
+    '<circle class="mw-bell" cx="80" cy="113" r="6" fill="url(#mwFurBell)"/><circle cx="78" cy="111" r="1.8" fill="#fff" opacity=".85"/></g>' +
     // head
     '<g class="mw-head">' +
-    '<path d="M38 54 L44 12 L72 38 Z" fill="url(#mwFur)" stroke="#2A2420" stroke-width="3" stroke-linejoin="round" class="mw-ear l"/>' +
-    '<path d="M46 44 L48 24 L63 38 Z" fill="#FFB8B8" class="mw-ear l"/>' +
-    '<path d="M122 54 L116 12 L88 38 Z" fill="#FF9F6E" stroke="#2A2420" stroke-width="3" stroke-linejoin="round" class="mw-ear r"/>' +
-    '<path d="M114 44 L112 24 L97 38 Z" fill="#FFB8B8" class="mw-ear r"/>' +
+    '<path d="M34 56 Q27 14 46 11 Q59 14 72 32 Z" fill="url(#mwFur)" class="mw-ear l"/>' +
+    '<path d="M42 46 Q40 24 48 22 Q56 25 64 34 Z" fill="#FFB3C1" class="mw-ear l"/>' +
+    '<path d="M126 56 Q133 14 114 11 Q101 14 88 32 Z" fill="url(#mwFurOr)" class="mw-ear r"/>' +
+    '<path d="M118 46 Q120 24 112 22 Q104 25 96 34 Z" fill="#FFB3C1" class="mw-ear r"/>' +
     '<ellipse cx="80" cy="66" rx="48" ry="40" fill="url(#mwFur)"/>' +
-    '<g clip-path="url(#mwHead)"><path d="M94 22 Q130 28 132 70 Q116 52 96 46 Z" fill="#FF9F6E"/></g>' +
-    '<ellipse cx="80" cy="66" rx="48" ry="40" fill="none" stroke="#2A2420" stroke-width="3"/>' +
+    '<g clip-path="url(#mwHead)"><path d="M90 22 Q125 26 130 66 Q114 49 93 44 Q85 34 90 22Z" fill="url(#mwFurOr)"/></g>' +
+    '<ellipse class="mw-gloss" cx="58" cy="41" rx="17" ry="8" fill="url(#mwFurGl)" transform="rotate(-22 58 41)"/>' +
     '<g class="mw-eyes-open"><g class="mw-look">' +
-    '<ellipse cx="62" cy="68" rx="7.5" ry="9.5" fill="#2A2420"/><ellipse cx="98" cy="68" rx="7.5" ry="9.5" fill="#2A2420"/>' +
-    '<circle cx="64.8" cy="64.2" r="2.8" fill="#fff"/><circle cx="100.8" cy="64.2" r="2.8" fill="#fff"/>' +
-    '<circle cx="60" cy="72" r="1.2" fill="#fff" opacity=".7"/><circle cx="96" cy="72" r="1.2" fill="#fff" opacity=".7"/></g></g>' +
-    '<g class="mw-eyes-happy" fill="none" stroke="#2A2420" stroke-width="4" stroke-linecap="round"><path d="M54 71 Q62 60 70 71"/><path d="M90 71 Q98 60 106 71"/></g>' +
-    '<g class="mw-eyes-sleep" fill="none" stroke="#2A2420" stroke-width="3.5" stroke-linecap="round"><path d="M54 69 Q62 75 70 69"/><path d="M90 69 Q98 75 106 69"/></g>' +
-    '<g class="mw-brows" fill="none" stroke="#2A2420" stroke-width="3" stroke-linecap="round"><path d="M54 52 L68 57"/><path d="M106 52 L92 57"/></g>' +
-    '<circle cx="49" cy="82" r="7.5" fill="#FF8FA8" opacity=".45"/><circle cx="111" cy="82" r="7.5" fill="#FF8FA8" opacity=".45"/>' +
-    '<path d="M76 79 L84 79 L80 84 Z" fill="#FF8FA8" stroke="#2A2420" stroke-width="1.5" stroke-linejoin="round"/>' +
-    '<path class="mw-mouth-smile" d="M72 87 Q76 92 80 87 Q84 92 88 87" fill="none" stroke="#2A2420" stroke-width="2.5" stroke-linecap="round"/>' +
-    '<path class="mw-mouth-open" d="M73 87 Q80 99 87 87 Z" fill="#E8556E" stroke="#2A2420" stroke-width="2.2" stroke-linejoin="round"/>' +
-    '<path class="mw-mouth-sad" d="M73 91 Q80 84 87 91" fill="none" stroke="#2A2420" stroke-width="2.5" stroke-linecap="round"/>' +
-    '<g stroke="#2A2420" stroke-width="2" stroke-linecap="round" opacity=".6"><path d="M38 80 L16 76"/><path d="M38 87 L17 90"/><path d="M122 80 L144 76"/><path d="M122 87 L143 90"/></g>' +
+    '<ellipse cx="62" cy="69" rx="9.2" ry="10.8" fill="url(#mwFurEye)"/><ellipse cx="98" cy="69" rx="9.2" ry="10.8" fill="url(#mwFurEye)"/>' +
+    '<circle cx="65.6" cy="64.4" r="3.7" fill="#fff"/><circle cx="101.6" cy="64.4" r="3.7" fill="#fff"/>' +
+    '<circle cx="59" cy="74" r="1.6" fill="#fff" opacity=".8"/><circle cx="95" cy="74" r="1.6" fill="#fff" opacity=".8"/></g></g>' +
+    '<g class="mw-eyes-happy" fill="none" stroke="#2A1F3D" stroke-width="4.2" stroke-linecap="round"><path d="M53 72 Q62 61 71 72"/><path d="M89 72 Q98 61 107 72"/></g>' +
+    '<g class="mw-eyes-sleep" fill="none" stroke="#2A1F3D" stroke-width="3.8" stroke-linecap="round"><path d="M53 70 Q62 77 71 70"/><path d="M89 70 Q98 77 107 70"/></g>' +
+    '<g class="mw-brows" fill="none" stroke="#2A1F3D" stroke-width="3" stroke-linecap="round"><path d="M53 53 L67 58"/><path d="M107 53 L93 58"/></g>' +
+    '<circle cx="47" cy="84" r="10" fill="url(#mwFurBl)"/><circle cx="113" cy="84" r="10" fill="url(#mwFurBl)"/>' +
+    '<path d="M76 79.5 Q80 78 84 79.5 Q82.5 83 80 84 Q77.5 83 76 79.5Z" fill="#FF8FA8"/>' +
+    '<path class="mw-mouth-smile" d="M72 87 Q76 92 80 87.5 Q84 92 88 87" fill="none" stroke="#6B2A3E" stroke-width="2.4" stroke-linecap="round"/>' +
+    '<path class="mw-mouth-open" d="M72 87 Q80 101 88 87 Q80 90 72 87Z" fill="#7A2840"/>' +
+    '<path class="mw-mouth-sad" d="M73 91 Q80 85 87 91" fill="none" stroke="#6B2A3E" stroke-width="2.4" stroke-linecap="round"/>' +
+    '<g stroke="#D9A88A" stroke-width="1.6" stroke-linecap="round" opacity=".7"><path d="M36 80 L18 77"/><path d="M36 86 L19 88"/><path d="M124 80 L142 77"/><path d="M124 86 L141 88"/></g>' +
     '</g></svg>';
 
   var STAR = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.4 5.6 6.1.5-4.6 4 1.4 6-5.3-3.2-5.3 3.2 1.4-6-4.6-4 6.1-.5z"/></svg>';
