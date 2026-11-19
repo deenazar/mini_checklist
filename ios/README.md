@@ -4,6 +4,11 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 4.2
+
+- **Water glass**: the water card and the water sheet show a glass that fills up as you drink. The water has moving waves and little bubbles. Each drink drops in, sloshes the water and bounces the glass, and the glass glows mint when you reach your goal.
+- **No more “Show welcome page” in Settings.** Signing out opens the welcome page by itself, and a guest signs in from Settings › Account & sync.
+
 ## What’s new in version 4.1
 
 - **Signing out** now goes straight back to the welcome page (sign in again, or carry on as a guest).

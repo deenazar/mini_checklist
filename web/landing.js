@@ -240,29 +240,8 @@
     }
   }
 
-  // Settings › "Show welcome page": the only way back to it on the iPhone, where you can't add ?welcome to the address.
-  (function () {
-    var body = document.querySelector('#ssheet .sbody');
-    if (!body) return;
-    var grp = el('div', 'sgrp');
-    grp.id = 'sWelcomeGrp';
-    var b = el('button', 'srow link', '');
-    b.type = 'button';
-    var sp = el('span', '', 'Show welcome page');
-    var sm = el('small', 'ssub', 'Sign in with Google or continue as a guest');
-    sp.appendChild(sm);
-    b.appendChild(sp);
-    b.appendChild(document.createElement('b'));
-    b.addEventListener('click', function () {
-      if (root) return;
-      var closeBtn = document.getElementById('sClose');
-      if (closeBtn) closeBtn.click();
-      show();
-    });
-    grp.appendChild(b);
-    var acct = document.getElementById('sAccountGrp');
-    if (acct && acct.nextSibling) body.insertBefore(grp, acct.nextSibling); else body.insertBefore(grp, body.firstElementChild);
-  })();
+  // There is no "Show welcome page" row in Settings: signing out opens the welcome page by itself, and
+  // a guest signs in from Settings › Account & sync.
 
   // Signing out goes back to the welcome page (sign in again, or carry on as a guest; the checklist stays on the iPhone).
   var wasSignedIn = null;

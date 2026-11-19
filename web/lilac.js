@@ -121,6 +121,56 @@
     if (c) { var r = c.getBoundingClientRect(); splash(r.left + r.width / 2, r.top + r.height / 2, ''); buzz(20); }
   });
 
+  /* ---------- Water glass: the water rises as you drink, with moving waves and bubbles ---------- */
+  function glassSVG(id) {
+    var wave = 'M0 0 Q7.5 -3.2 15 0 T30 0 T45 0 T60 0 T75 0 T90 0 T105 0 T120 0 V90 H0Z';
+    return '<svg class="lglass" viewBox="0 0 60 84" aria-hidden="true">' +
+      '<defs><clipPath id="' + id + '"><path d="M9 8 H51 L46.2 74.5 Q45.8 79 41.2 79 H18.8 Q14.2 79 13.8 74.5 Z"/></clipPath>' +
+      '<linearGradient id="' + id + 'w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7CC4FF"/><stop offset="1" stop-color="#2F86F0"/></linearGradient></defs>' +
+      '<path class="gl-back" d="M9 8 H51 L46.2 74.5 Q45.8 79 41.2 79 H18.8 Q14.2 79 13.8 74.5 Z"/>' +
+      '<g clip-path="url(#' + id + ')"><g class="gl-water">' +
+      '<path class="gl-wave b" d="' + wave + '" transform="translate(0 1.5)"/>' +
+      '<path class="gl-wave f" d="' + wave + '" fill="url(#' + id + 'w)"/>' +
+      '<circle class="gl-bub" cx="22" cy="60" r="1.8"/><circle class="gl-bub" cx="36" cy="66" r="1.3"/><circle class="gl-bub" cx="29" cy="70" r="2.1"/>' +
+      '</g></g>' +
+      '<path class="gl-rim" d="M9 8 H51 L46.2 74.5 Q45.8 79 41.2 79 H18.8 Q14.2 79 13.8 74.5 Z"/>' +
+      '<path class="gl-shine" d="M15.5 14 L19 70"/>' +
+      '<g class="gl-drop"><path d="M30 -14 C27 -9 25.5 -6.5 25.5 -4.5 a4.5 4.5 0 0 0 9 0 C34.5 -6.5 33 -9 30 -14Z"/></g>' +
+      '</svg>';
+  }
+  function setLevel(host, frac) {
+    frac = Math.max(0, Math.min(1, frac || 0));
+    var prev = parseFloat(host.dataset.lv || '-1');
+    host.style.setProperty('--lv', frac.toFixed(3));
+    host.classList.toggle('full', frac >= 1);
+    host.classList.toggle('empty', frac <= 0);
+    if (prev >= 0 && frac > prev + 0.001 && !reduce) {
+      host.classList.remove('glug'); void host.offsetWidth; host.classList.add('glug');
+      clearTimeout(host._glugT); host._glugT = setTimeout(function () { host.classList.remove('glug'); }, 1300);
+    }
+    host.dataset.lv = String(frac);
+  }
+  // In the water card on the home screen
+  var stripGlass = null;
+  if (wdrop) {
+    wdrop.classList.add('has-glass');
+    wdrop.innerHTML = glassSVG('lgS');
+    stripGlass = wdrop;
+  }
+  function stripLevel() { if (stripGlass && wMeter) setLevel(stripGlass, (parseFloat(wMeter.style.width) || 0) / 100); }
+  if (wMeter && window.MutationObserver) new MutationObserver(stripLevel).observe(wMeter, { attributes: true, attributeFilter: ['style'] });
+  stripLevel();
+  // In the water sheet: a big glass in place of the ring
+  var wring = doc.querySelector('#wsheet .wring'), wPct = $('wPct');
+  if (wring && wPct) {
+    wring.classList.add('has-glass');
+    var big = el('div', 'lglass-wrap', glassSVG('lgB'));
+    wring.insertBefore(big, wring.firstChild);
+    var sheetLevel = function () { setLevel(wring, (parseFloat(wPct.textContent) || 0) / 100); };
+    if (window.MutationObserver) new MutationObserver(sheetLevel).observe(wPct, { childList: true, characterData: true, subtree: true });
+    sheetLevel();
+  }
+
   /* ---------- A little confetti pop when you tick a task ---------- */
   doc.addEventListener('click', function (e) {
     var c = e.target.closest && e.target.closest('.task .chk');
