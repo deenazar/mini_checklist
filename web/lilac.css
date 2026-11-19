@@ -306,3 +306,43 @@ html.mw-rest .ring.run::after,html.mw-hidden .lfocus *,html.mw-hidden .ldone *,h
 .ld-foot,.ld-status{color:#3A2C78}
 .ld-art>svg{filter:drop-shadow(0 18px 24px rgba(60,30,150,.28))}
 .sl-confetti i:nth-child(5n+2){background:#7FE3B8}.sl-confetti i:nth-child(5n){background:#fff}
+
+/* ---------- 4.1 polish ---------- */
+/* Day picker: smaller type that always fits inside its pill */
+.days{gap:4px}
+.dchip{min-height:50px;padding:6px 0;border-radius:15px;gap:3px}
+.dchip .w{font:800 8.5px/1 var(--body);letter-spacing:.04em;max-width:100%;overflow:hidden;text-overflow:clip}
+.dchip .n{font:700 15px/1 var(--display)}
+.dchip.today:not(.sel) .n{color:var(--lav-lip)}
+:root[data-theme="dark"] .dchip.today:not(.sel) .n{color:var(--lav)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dchip.today:not(.sel) .n{color:var(--lav)}}
+.dchip.sel{background:linear-gradient(160deg,#A58CFF,#7C5CF0);box-shadow:0 4px 0 #5A3FCB}
+.dchip.sel .w,.dchip.sel .n{color:#fff}
+@media (max-width:380px){ .dchip .w{font-size:7.5px;letter-spacing:0} .dchip .n{font-size:14px} }
+
+/* Scrolling under the list header fades softly instead of cutting cards in half */
+.scroll{mask-image:linear-gradient(to bottom,transparent 0,#000 22px,#000 calc(100% - 24px),transparent);padding-top:10px}
+.lplan{margin-top:2px}
+
+/* Empty day */
+.empty{padding:14px 16px 26px;gap:6px}
+.empty-art{width:130px}
+.le-mimi{width:118px;margin:0 auto;animation:mwFloat 3.6s ease-in-out infinite}
+.le-mimi .mw-cat{width:100%;height:auto}
+.le-mimi .mw-tail{animation:mwSwish 2.8s ease-in-out infinite}
+.le-mimi .mw-eyes-open{animation:mwBlink 5.2s infinite}
+.empty p{max-width:32ch;font:600 14px/1.45 var(--body)}
+.le-go{margin-top:10px;height:46px;padding:0 20px;border:0;border-radius:16px;background:var(--lav);color:var(--lav-ink);font:700 16px var(--display);
+  display:inline-flex;align-items:center;gap:8px;box-shadow:var(--lip) var(--lav-lip);transition:transform .2s var(--spring),box-shadow .2s}
+.le-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--lav-lip)}
+.le-go svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round}
+
+/* Header date: a soft glass pill so it reads on every sky */
+.date{padding:6px 12px 6px 8px;border-radius:18px;background:rgba(23,17,60,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);text-shadow:none}
+.date .num{font-size:38px}
+
+/* Task cards: a gentle lift as they appear, and press feedback */
+.tile:active{transform:scale(.985)}
+.task.new .tile{animation:taskIn .55s var(--spring)}
+@keyframes taskIn{from{transform:translateY(-10px) scale(.94);opacity:0}}
+html.mw-rest .le-mimi,html.mw-rest .le-mimi *{animation-play-state:paused!important}

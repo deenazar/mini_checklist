@@ -178,14 +178,8 @@
       pGo.innerHTML = 'Open focus ' + ICON.arrow;
       planAction = openFocus;
     } else if (!d.total) {
-      sig = 'none';
-      if (sig === planSig) return;
-      plan.classList.remove('all');
-      pCap.textContent = greet() + ' · today’s plan';
-      pH.textContent = 'A fresh day. What’s first?';
-      pP.textContent = 'Add one small task to get going.';
-      pGo.innerHTML = 'Add a task ' + ICON.plus;
-      planAction = function () { input && input.focus(); };
+      // An empty day: the friendlier empty state below says it all.
+      plan.hidden = true; planSig = 'none'; return;
     } else if (d.done >= d.total) {
       sig = 'all' + d.total;
       if (sig === planSig) return;
@@ -209,8 +203,25 @@
     pBar.style.width = (d.total ? d.pct : 0) + '%';
   }
   pGo.addEventListener('click', function () { buzz(15); if (planAction) planAction(); });
+  // The empty day: plush Mimi and one clear button instead of a wall of tips.
+  function paintEmpty() {
+    var e = list && list.querySelector('.empty'), art = e && e.querySelector('.empty-art');
+    if (!e || !art || art.dataset.lilac) return;
+    art.dataset.lilac = '1';
+    art.innerHTML = '<div class="le-mimi">' + Art.cat('empty') + '</div>';
+    var st = e.querySelector('strong'), p = e.querySelector('p');
+    if (st && st.textContent === 'Nothing planned yet') {
+      st.textContent = 'A fresh, empty day ✨';
+      if (p) { p.textContent = 'Add your first task and Mimi will cheer you on. Tip: tap the ring to time it, swipe right to finish.'; }
+      var b = el('button', 'le-go', 'Add your first task ' + ICON.plus);
+      b.type = 'button';
+      b.addEventListener('click', function () { buzz(15); if (input) { input.focus(); input.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } });
+      e.appendChild(b);
+    }
+  }
+  paintEmpty();
   if (window.MutationObserver) {
-    var mo = new MutationObserver(function () { paintPlan(); });
+    var mo = new MutationObserver(function () { paintPlan(); paintEmpty(); });
     [$('remain'), $('listTitle'), list].forEach(function (n) { if (n) mo.observe(n, { childList: true, characterData: true, subtree: n !== list }); });
   }
   setInterval(function () { if (!doc.hidden) paintPlan(); }, 1000);

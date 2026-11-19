@@ -263,4 +263,16 @@
     var acct = document.getElementById('sAccountGrp');
     if (acct && acct.nextSibling) body.insertBefore(grp, acct.nextSibling); else body.insertBefore(grp, body.firstElementChild);
   })();
+
+  // Signing out goes back to the welcome page (sign in again, or carry on as a guest; the checklist stays on the iPhone).
+  var wasSignedIn = null;
+  window.addEventListener('mimi-sync-status', function (e) {
+    var s = e.detail || {};
+    if (wasSignedIn === true && s.signedIn === false && s.configured !== false && !root) {
+      [].forEach.call(document.querySelectorAll('.sheet.open'), function (sh) { var d = sh.querySelector('.shead .sbtn'); if (d) d.click(); });
+      if (window.mimiLilac) { try { window.mimiLilac.closeFocus(); window.mimiLilac.closeDone(); } catch (err) {} }
+      setTimeout(show, 350);
+    }
+    if (typeof s.signedIn === 'boolean') wasSignedIn = s.signedIn;
+  });
 })();

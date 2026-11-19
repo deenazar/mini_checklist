@@ -1481,10 +1481,13 @@
 
   /* island shrinks while the task list scrolls */
   (function(){
-    const stage=$('stage'), sc=$('scroll'), sp=$('spacer'), ls=$('list'), MIN=128; let base=0, raf=0;
+    const stage=$('stage'), sc=$('scroll'), sp=$('spacer'), ls=$('list'); let MIN=128, base=0, raf=0;
     function apply(){ raf=0; const range=Math.max(0,base-MIN), d=Math.min(range,Math.max(0,sc.scrollTop)), p=range?d/range:0;
       stage.style.height=(base-d)+'px'; stage.style.setProperty('--cp',p.toFixed(3)); stage.classList.toggle('shrunk',p>.4); sp.style.height=range+'px'; ls.style.transform=d?'translate3d(0,'+d+'px,0)':''; }
-    function measure(){ const top=sc.scrollTop; stage.style.height=''; base=stage.offsetHeight; sc.scrollTop=top; apply(); }
+    function measure(){ const top=sc.scrollTop; stage.style.height=''; base=stage.offsetHeight;
+      // Never shrink past the date row, so the panel can't slide over it.
+      const dt=document.querySelector('.hud.top .date'); MIN=Math.max(128,dt?dt.offsetTop+dt.offsetHeight+40:128);
+      sc.scrollTop=top; apply(); }
     sc.addEventListener('scroll',()=>{ if(!raf) raf=requestAnimationFrame(apply); },{passive:true});
     addEventListener('resize',measure); measure();
   })();
