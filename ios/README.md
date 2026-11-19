@@ -4,6 +4,20 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 4.0: the Lilac look
+
+A fresh look across the whole app, with everything working as before.
+
+- **Lavender and soft ink colours**, rounded Fredoka and Nunito fonts (bundled, so they work offline), and chunky buttons that press down like real ones. Light and dark mode both follow Settings › Appearance.
+- **Plush Mimi**: a softer, shaded, glossy-eyed Mimi in the header, the room and the welcome page (the Home Screen widgets keep their look for now). She still sleeps at night, wakes in the morning, follows the sky by the time of day, giggles, purrs, gets dizzy and dances, exactly as before. *Me as Mimi* still works.
+- **Today’s plan card** at the top of the list: how the day is going and one button for the next step (Add a task, Start next task, Open focus or See my day).
+- **Bottom bar**: Today, Notes, Room, Insights and Settings. It hides while you type or a sheet is open.
+- **Easier adding**: one big “Add a task…” field with a + button; list, priority, time, reminder and Daily open while you type.
+- **Water**: the drop fills as you drink, and logging a glass splashes with a “+250 ml”.
+- **Focus screen**: tap *Start next task*, *Open focus* or the running time on a task. Mimi sits in a progress ring with the time left, Pause/Resume and “I’m done”. When paused, Mimi naps.
+- **Day complete**: tick the last task of the day and Mimi celebrates with a trophy, confetti, your week of streaks, focus time and *Plan tomorrow*.
+- The welcome page is lavender too.
+
 ## What’s new in version 3.7
 
 - **Mimi’s room is back**, behind the new house button at the top of the home screen. Tap, tickle or stroke Mimi, feed her, play with yarn, dance.
