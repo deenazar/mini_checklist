@@ -121,6 +121,25 @@
     if (c) { var r = c.getBoundingClientRect(); splash(r.left + r.width / 2, r.top + r.height / 2, ''); buzz(20); }
   });
 
+  /* ---------- A little confetti pop when you tick a task ---------- */
+  doc.addEventListener('click', function (e) {
+    var c = e.target.closest && e.target.closest('.task .chk');
+    if (!c || reduce) return;
+    var task = c.closest('.task');
+    if (task && task.classList.contains('done')) return; // un-ticking: no party
+    var r = c.getBoundingClientRect(), b = el('div', 'lburst'), cols = ['#B4A0FF', '#7FE3B8', '#FFC94D', '#FF7A59', '#FF8FB1'];
+    b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = (r.top + r.height / 2) + 'px';
+    for (var i = 0; i < 12; i++) {
+      var d = el('i'), a = i / 12 * Math.PI * 2, rr = 26 + Math.random() * 18;
+      d.style.setProperty('--c', cols[i % 5]);
+      d.style.setProperty('--x', (Math.cos(a) * rr).toFixed(0) + 'px');
+      d.style.setProperty('--y', (Math.sin(a) * rr).toFixed(0) + 'px');
+      b.appendChild(d);
+    }
+    doc.body.appendChild(b);
+    setTimeout(function () { b.remove(); }, 750);
+  }, true);
+
   /* ---------- Bottom bar ---------- */
   var nav = el('nav', 'lnav');
   nav.setAttribute('aria-label', 'Main');
@@ -137,7 +156,7 @@
     b.type = 'button';
     b.dataset.k = n[1];
     if (i === 0) b.setAttribute('aria-current', 'page');
-    b.addEventListener('click', function () { buzz(10); n[3](); });
+    b.addEventListener('click', function () { buzz(10); b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); n[3](); });
     nav.appendChild(b);
   });
   doc.body.appendChild(nav);
@@ -178,14 +197,8 @@
       pGo.innerHTML = 'Open focus ' + ICON.arrow;
       planAction = openFocus;
     } else if (!d.total) {
-      sig = 'none';
-      if (sig === planSig) return;
-      plan.classList.remove('all');
-      pCap.textContent = greet() + ' · today’s plan';
-      pH.textContent = 'A fresh day. What’s first?';
-      pP.textContent = 'Add one small task to get going.';
-      pGo.innerHTML = 'Add a task ' + ICON.plus;
-      planAction = function () { input && input.focus(); };
+      // An empty day: the friendlier empty state below says it all.
+      plan.hidden = true; planSig = 'none'; return;
     } else if (d.done >= d.total) {
       sig = 'all' + d.total;
       if (sig === planSig) return;
@@ -205,12 +218,30 @@
       pGo.innerHTML = 'Start next task ' + ICON.play;
       planAction = function () { A.focusNext(); setTimeout(function () { if (A.running()) openFocus(); }, 250); };
     }
+    if (planSig && planSig !== sig && !reduce) { plan.classList.remove('bump'); void plan.offsetWidth; plan.classList.add('bump'); }
     planSig = sig;
     pBar.style.width = (d.total ? d.pct : 0) + '%';
   }
   pGo.addEventListener('click', function () { buzz(15); if (planAction) planAction(); });
+  // The empty day: plush Mimi and one clear button instead of a wall of tips.
+  function paintEmpty() {
+    var e = list && list.querySelector('.empty'), art = e && e.querySelector('.empty-art');
+    if (!e || !art || art.dataset.lilac) return;
+    art.dataset.lilac = '1';
+    art.innerHTML = '<div class="le-mimi">' + Art.cat('empty') + '</div>';
+    var st = e.querySelector('strong'), p = e.querySelector('p');
+    if (st && st.textContent === 'Nothing planned yet') {
+      st.textContent = 'A fresh, empty day ✨';
+      if (p) { p.textContent = 'Add your first task and Mimi will cheer you on. Tip: tap the ring to time it, swipe right to finish.'; }
+      var b = el('button', 'le-go', 'Add your first task ' + ICON.plus);
+      b.type = 'button';
+      b.addEventListener('click', function () { buzz(15); if (input) { input.focus(); input.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } });
+      e.appendChild(b);
+    }
+  }
+  paintEmpty();
   if (window.MutationObserver) {
-    var mo = new MutationObserver(function () { paintPlan(); });
+    var mo = new MutationObserver(function () { paintPlan(); paintEmpty(); });
     [$('remain'), $('listTitle'), list].forEach(function (n) { if (n) mo.observe(n, { childList: true, characterData: true, subtree: n !== list }); });
   }
   setInterval(function () { if (!doc.hidden) paintPlan(); }, 1000);
