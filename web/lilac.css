@@ -391,3 +391,43 @@ html.mw-rest .le-mimi,html.mw-rest .le-mimi *{animation-play-state:paused!import
 @keyframes lcBump{40%{transform:scale(1.025)}}
 html.mw-rest .lplan .pbar i::after{animation-play-state:paused}
 @media (prefers-reduced-motion:reduce){ .pin>*,.lnav,.lnav button.tap .ti,.lplan .pbar i::after,.lburst{animation:none!important} }
+
+/* ---------- Water glass (lilac.js): the level rises as you drink ---------- */
+.wdrop.has-glass{background:none!important;overflow:visible;width:40px;height:44px;border-radius:0}
+.wdrop.has-glass::after{display:none}
+.wring.has-glass svg:not(.lglass){display:none}
+.wring.has-glass{width:84px;height:106px}
+.wring.has-glass b{inset:auto 0 -4px 0;height:auto;font:600 13px var(--display);color:var(--sec);place-items:end center}
+.lglass-wrap{position:absolute;inset:0 0 16px}
+.lglass{display:block;width:100%;height:100%;overflow:visible}
+.wstrip .lglass{width:40px;height:44px}
+.lglass *{transform-box:view-box}
+.gl-back{fill:color-mix(in srgb,var(--water) 10%,transparent)}
+.gl-rim{fill:none;stroke:color-mix(in srgb,var(--water) 55%,var(--sec));stroke-width:2.6;stroke-linejoin:round}
+.gl-shine{stroke:#fff;stroke-width:2.4;stroke-linecap:round;opacity:.55}
+.gl-water{transform:translateY(calc(82px - var(--lv,0) * 74px));transition:transform 1.1s cubic-bezier(.2,1.25,.35,1)}
+.gl-wave{animation:glWave 2.6s linear infinite}
+.gl-wave.b{fill:#BFE0FF;opacity:.8;animation-duration:3.8s;animation-direction:reverse}
+@keyframes glWave{to{transform:translateX(-30px)}}
+.gl-bub{fill:#fff;opacity:0;animation:glBub 2.8s ease-in infinite}
+.gl-bub:nth-of-type(2){animation-delay:.9s}.gl-bub:nth-of-type(3){animation-delay:1.8s}
+@keyframes glBub{0%{opacity:0;transform:translateY(0)}20%{opacity:.85}100%{opacity:0;transform:translateY(-34px)}}
+.empty .gl-bub,.has-glass.empty .gl-bub{display:none}
+/* A drink: a drop falls in, the water sloshes, and the glass bounces */
+.gl-drop{fill:#4DA6FF;opacity:0}
+.glug .gl-drop{animation:glDrop .55s cubic-bezier(.5,0,.8,.6)}
+@keyframes glDrop{0%{opacity:1;transform:translateY(0)}85%{opacity:1}100%{opacity:0;transform:translateY(calc(70px - var(--lv,0) * 60px))}}
+.glug .gl-wave.f{animation:glWave .9s linear infinite}
+.glug .gl-water{animation:glSlosh 1.1s ease-out .45s}
+@keyframes glSlosh{25%{rotate:-5deg}50%{rotate:4deg}75%{rotate:-2deg}}
+.gl-water{transform-origin:30px 40px}
+.glug .lglass{animation:glBounce .7s cubic-bezier(.2,1.5,.4,1) .45s}
+@keyframes glBounce{40%{transform:scale(1.08,.94)}70%{transform:scale(.97,1.03)}}
+/* Goal reached: the glass glows mint and twinkles */
+.has-glass.full .gl-rim{stroke:var(--mint-hi)}
+.has-glass.full .lglass{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--mint-hi) 70%,transparent))}
+@media (prefers-reduced-motion:reduce){ .gl-wave,.gl-bub,.glug *{animation:none!important} .gl-water{transition:none} }
+html.mw-rest .lglass *,html.mw-hidden .lglass *{animation-play-state:paused!important}
+.wring.has-glass .lglass{transform:none}
+.wstrip .wdrop.has-glass svg.lglass{width:36px;height:46px}
+.wstrip .wdrop.has-glass{width:42px;height:48px;display:grid;place-items:center}
