@@ -3,7 +3,7 @@
  *
  *  - Add a task: one big field with a "+" button; its options (list, priority, time, reminder, daily) open while you type.
  *  - Water: a little splash and "+250 ml" float up when you log a drink; the drop fills with the day's water.
- *  - Today's plan card at the top of the list: how the day is going, and one button for the next step.
+ *  - An "Up next" bar above the bottom bar: the next task (or the running one) and one button to start or open it.
  *  - A bottom bar: Today, Notes, Room, Insights, Settings (it hides while you type or a sheet is open).
  *  - Focus screen: the running task full screen, with Mimi, a ring, the time left, Pause/Resume and Done.
  *  - Day complete: when every task is ticked, Mimi celebrates with a trophy, confetti and your week.
@@ -142,8 +142,8 @@
     frac = Math.max(0, Math.min(1, frac || 0));
     var prev = parseFloat(host.dataset.lv || '-1');
     host.style.setProperty('--lv', frac.toFixed(3));
-    host.classList.toggle('full', frac >= 1);
-    host.classList.toggle('empty', frac <= 0);
+    host.classList.toggle('gl-full', frac >= 1);
+    host.classList.toggle('gl-empty', frac <= 0);
     if (prev >= 0 && frac > prev + 0.001 && !reduce) {
       host.classList.remove('glug'); void host.offsetWidth; host.classList.add('glug');
       clearTimeout(host._glugT); host._glugT = setTimeout(function () { host.classList.remove('glug'); }, 1300);
@@ -216,62 +216,66 @@
   syncNav();
   if ($('setBtn')) $('setBtn').style.display = 'none';
 
-  /* ---------- Today's plan card ---------- */
+  /* ---------- "Up next" bar: floats just above the bottom bar, like a music app's mini player ---------- */
   var scroll = $('scroll'), list = $('list');
-  var plan = el('section', 'lplan');
+  var plan = el('section', 'lmini');
   plan.setAttribute('aria-live', 'polite');
-  plan.innerHTML = '<div class="cap"></div><h3></h3><p></p><button class="go" type="button"></button><div class="pbar"><i></i></div><div class="art" aria-hidden="true"></div>';
-  if (scroll && list) scroll.insertBefore(plan, list);
-  // While the list scrolls, the header shrinks and app.js shifts the list to match; the card moves with it.
-  if (list && window.MutationObserver) new MutationObserver(function () { plan.style.transform = list.style.transform; })
-    .observe(list, { attributes: true, attributeFilter: ['style'] });
-  var pCap = plan.querySelector('.cap'), pH = plan.querySelector('h3'), pP = plan.querySelector('p'), pGo = plan.querySelector('.go'), pBar = plan.querySelector('.pbar i'), pArt = plan.querySelector('.art');
+  plan.hidden = true;
+  plan.innerHTML = '<span class="lm-av" aria-hidden="true"></span><span class="lm-tx"><small class="cap"></small><b class="lm-t"></b><small class="lm-p"></small></span>' +
+    '<button class="go" type="button"></button><span class="pbar" aria-hidden="true"><i></i></span>';
+  doc.body.appendChild(plan);
+  var pCap = plan.querySelector('.cap'), pH = plan.querySelector('.lm-t'), pP = plan.querySelector('.lm-p'), pGo = plan.querySelector('.go'), pBar = plan.querySelector('.pbar i'), pArt = plan.querySelector('.lm-av');
   var planAction = null, planSig = '';
   function paintArt() { pArt.innerHTML = Art.cat('plan'); }
   paintArt();
   Art.onChange && Art.onChange(paintArt);
+  function showPlan(on) { plan.hidden = !on; html.classList.toggle('has-mini', on); }
   function paintPlan() {
     var title = $('listTitle'), isToday = !title || title.textContent === 'Today';
-    plan.hidden = !isToday;
-    if (!isToday) return;
+    if (!isToday) { showPlan(false); return; }
     var d = A.today(), r = A.running(), sig;
-    if (!d.ready) { plan.hidden = true; return; }
+    if (!d.ready || (!d.total && !r)) { showPlan(false); planSig = 'none'; return; }
+    showPlan(true);
     if (r) {
       var left = r.est ? r.est - r.elapsed : 0;
-      sig = 'run' + r.id + Math.floor(r.elapsed / 30000);
-      if (sig === planSig) { pP.textContent = r.est ? (left >= 0 ? clock(left) + ' left' : clock(-left) + ' over') : clock(r.elapsed) + ' so far'; return; }
-      plan.classList.remove('all');
+      var tm = r.est ? (left >= 0 ? clock(left) + ' left' : clock(-left) + ' over') : clock(r.elapsed) + ' so far';
+      pP.textContent = tm;
+      if (r.est) pBar.style.width = Math.min(100, r.elapsed / r.est * 100).toFixed(1) + '%';
+      sig = 'run' + r.id;
+      if (sig === planSig) return;
+      plan.className = 'lmini run';
       pCap.textContent = 'Focusing now';
-      pH.textContent = short(r.text, 46);
-      pP.textContent = r.est ? (left >= 0 ? clock(left) + ' left' : clock(-left) + ' over') : clock(r.elapsed) + ' so far';
-      pGo.innerHTML = 'Open focus ' + ICON.arrow;
+      pH.textContent = r.text;
+      pGo.innerHTML = ICON.arrow;
+      pGo.setAttribute('aria-label', 'Open focus');
       planAction = openFocus;
-    } else if (!d.total) {
-      // An empty day: the friendlier empty state below says it all.
-      plan.hidden = true; planSig = 'none'; return;
     } else if (d.done >= d.total) {
       sig = 'all' + d.total;
       if (sig === planSig) return;
-      plan.classList.add('all');
-      pCap.textContent = greet() + ' · today’s plan';
+      plan.className = 'lmini all';
+      pCap.textContent = 'Today';
       pH.textContent = 'All ' + d.total + ' done! 🎉';
-      pP.textContent = 'Every box ticked. Mimi is proud of you.';
-      pGo.innerHTML = 'See my day ' + ICON.arrow;
+      pP.textContent = 'Tap to see your day';
+      pGo.innerHTML = ICON.star;
+      pGo.setAttribute('aria-label', 'See my day');
       planAction = openDone;
+      pBar.style.width = '100%';
     } else {
       sig = 'some' + d.done + '/' + d.total + d.next;
       if (sig === planSig) return;
-      plan.classList.remove('all');
-      pCap.textContent = greet() + ' · today’s plan';
-      pH.textContent = d.done + ' of ' + d.total + ' done. ' + (d.pct >= 60 ? 'Almost there.' : d.done ? 'Keep going.' : 'Let’s start.');
-      pP.textContent = 'Next: ' + d.next;
-      pGo.innerHTML = 'Start next task ' + ICON.play;
+      plan.className = 'lmini';
+      pCap.textContent = 'Up next · ' + d.done + ' of ' + d.total + ' done';
+      pH.textContent = d.next;
+      pP.textContent = '';
+      pGo.innerHTML = ICON.play;
+      pGo.setAttribute('aria-label', 'Start next task');
       planAction = function () { A.focusNext(); setTimeout(function () { if (A.running()) openFocus(); }, 250); };
+      pBar.style.width = d.pct + '%';
     }
-    if (planSig && planSig !== sig && !reduce) { plan.classList.remove('bump'); void plan.offsetWidth; plan.classList.add('bump'); }
+    if (planSig && planSig !== 'none' && planSig !== sig && !reduce) { plan.classList.remove('bump'); void plan.offsetWidth; plan.classList.add('bump'); }
     planSig = sig;
-    pBar.style.width = (d.total ? d.pct : 0) + '%';
   }
+  plan.addEventListener('click', function (e) { if (e.target.closest('.go')) return; buzz(10); if (planAction) planAction(); });
   pGo.addEventListener('click', function () { buzz(15); if (planAction) planAction(); });
   // The empty day: plush Mimi and one clear button instead of a wall of tips.
   function paintEmpty() {

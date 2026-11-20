@@ -412,7 +412,7 @@ html.mw-rest .lplan .pbar i::after{animation-play-state:paused}
 .gl-bub{fill:#fff;opacity:0;animation:glBub 2.8s ease-in infinite}
 .gl-bub:nth-of-type(2){animation-delay:.9s}.gl-bub:nth-of-type(3){animation-delay:1.8s}
 @keyframes glBub{0%{opacity:0;transform:translateY(0)}20%{opacity:.85}100%{opacity:0;transform:translateY(-34px)}}
-.empty .gl-bub,.has-glass.empty .gl-bub{display:none}
+.has-glass.gl-empty .gl-bub{display:none}
 /* A drink: a drop falls in, the water sloshes, and the glass bounces */
 .gl-drop{fill:#4DA6FF;opacity:0}
 .glug .gl-drop{animation:glDrop .55s cubic-bezier(.5,0,.8,.6)}
@@ -424,10 +424,52 @@ html.mw-rest .lplan .pbar i::after{animation-play-state:paused}
 .glug .lglass{animation:glBounce .7s cubic-bezier(.2,1.5,.4,1) .45s}
 @keyframes glBounce{40%{transform:scale(1.08,.94)}70%{transform:scale(.97,1.03)}}
 /* Goal reached: the glass glows mint and twinkles */
-.has-glass.full .gl-rim{stroke:var(--mint-hi)}
-.has-glass.full .lglass{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--mint-hi) 70%,transparent))}
+.has-glass.gl-full .gl-rim{stroke:var(--mint-hi)}
+.has-glass.gl-full .lglass{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--mint-hi) 70%,transparent))}
 @media (prefers-reduced-motion:reduce){ .gl-wave,.gl-bub,.glug *{animation:none!important} .gl-water{transition:none} }
 html.mw-rest .lglass *,html.mw-hidden .lglass *{animation-play-state:paused!important}
 .wring.has-glass .lglass{transform:none}
 .wstrip .wdrop.has-glass svg.lglass{width:36px;height:46px}
 .wstrip .wdrop.has-glass{width:42px;height:48px;display:grid;place-items:center}
+
+/* ---------- 4.3 ---------- */
+/* Finished tasks: no "…" menu (tap the tick to undo, swipe left to delete) */
+.task.done .more{visibility:hidden;pointer-events:none}
+
+/* "Up next" bar above the bottom bar */
+.lmini{position:fixed;z-index:16;left:max(18px,env(safe-area-inset-left,0px));right:max(18px,env(safe-area-inset-right,0px));max-width:500px;margin:0 auto;
+  bottom:calc(88px + env(safe-area-inset-bottom,0px));height:60px;border-radius:20px;display:flex;align-items:center;gap:10px;padding:0 8px 0 6px;overflow:hidden;cursor:pointer;
+  background:color-mix(in srgb,var(--ink) 92%,transparent);color:var(--panel);box-shadow:0 14px 30px -14px rgba(10,6,30,.6);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);animation:lmIn .5s var(--spring) both;transition:transform .35s var(--spring),opacity .25s}
+@keyframes lmIn{from{transform:translateY(30px) scale(.96);opacity:0}}
+.lmini.run{background:linear-gradient(120deg,#9D84FF,#7C5CF0);color:#fff}
+.lmini.all{background:linear-gradient(120deg,#7FE3B8,#4CCB93);color:#0E2A1E}
+.lm-av{flex:none;width:46px;height:46px;border-radius:15px;background:rgba(255,255,255,.12);display:grid;place-items:center;overflow:hidden}
+.lm-av .mw-cat{width:44px;height:auto;margin-top:6px}
+.lmini.run .lm-av .mw-body{animation:mwBreath 2.2s ease-in-out infinite}
+.lm-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.lm-tx .cap{font:600 10px var(--body);letter-spacing:.1em;text-transform:uppercase;opacity:.7}
+.lm-t{font:500 15px/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lm-p{font:500 12px var(--body);opacity:.8;font-variant-numeric:tabular-nums}
+.lm-p:empty{display:none}
+.lmini .go{flex:none;width:42px;height:42px;border:0;border-radius:14px;padding:0;display:grid;place-items:center;background:var(--lav);color:var(--lav-ink);transition:transform .2s var(--spring)}
+.lmini.run .go,.lmini.all .go{background:rgba(255,255,255,.9);color:#17112E}
+.lmini .go:active{transform:scale(.9)}
+.lmini .go svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.lmini .pbar{position:absolute;left:14px;right:14px;bottom:4px;height:3px;border-radius:2px;background:rgba(255,255,255,.15);overflow:hidden}
+.lmini .pbar i{display:block;height:100%;width:0;border-radius:2px;background:var(--lav);transition:width .9s var(--spring)}
+.lmini.run .pbar i,.lmini.all .pbar i{background:#fff}
+.lmini.bump{animation:lmBump .5s var(--spring)}
+@keyframes lmBump{40%{transform:scale(1.03)}}
+html.kb .lmini,html.sheet-open .lmini{transform:translateY(200%);opacity:0;pointer-events:none}
+html.has-mini .scroll{padding-bottom:calc(172px + env(safe-area-inset-bottom,0px))}
+html.has-mini .toast{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
+.lplan{display:none!important}
+@media (prefers-reduced-motion:reduce){ .lmini,.lmini.bump{animation:none} }
+
+/* Scrolling the list: Mimi shrinks (and grows back) instead of fading away; the week chart and stats fade */
+.stage.mw .mw-scene{opacity:1;transform:none;bottom:calc(74px - var(--cp,0) * 44px)}
+.stage.mw .mw-week{opacity:calc(1 - var(--cp,0) * 1.8);transition:none}
+.stage.mw .hud.bot{opacity:calc(1 - var(--cp,0) * 2.2)}
+.stage.mw.shrunk .hud.bot,.stage.mw.shrunk .mw-week{pointer-events:none}
+.stage.mw.shrunk .mw-mimi{pointer-events:auto}

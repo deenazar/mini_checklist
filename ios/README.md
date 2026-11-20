@@ -4,6 +4,14 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 4.3
+
+- **Up next bar**: today’s plan moved out of the list into a small bar just above the bottom bar, like a music app’s mini player. It shows the next task with a ▶ to start it (and open the focus screen), the running task with its time left, or “All done 🎉” to see your day.
+- **Mimi shrinks and grows as you scroll** the task list, instead of fading away. The week chart and stats fade, the date stays.
+- **Finished tasks** no longer show the “…” menu. Tap the tick to undo, swipe left to delete.
+- **Settings › Account & sync** no longer shows “Signed in as …”. It shows just the sync state, Sync now and Sign out.
+- Fixed: the empty water glass sat too low in the water card.
+
 ## What’s new in version 4.2
 
 - **Water glass**: the water card and the water sheet show a glass that fills up as you drink. The water has moving waves and little bubbles. Each drink drops in, sloshes the water and bounces the glass, and the glass glows mint when you reach your goal.

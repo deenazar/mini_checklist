@@ -1485,8 +1485,8 @@
     function apply(){ raf=0; const range=Math.max(0,base-MIN), d=Math.min(range,Math.max(0,sc.scrollTop)), p=range?d/range:0;
       stage.style.height=(base-d)+'px'; stage.style.setProperty('--cp',p.toFixed(3)); stage.classList.toggle('shrunk',p>.4); sp.style.height=range+'px'; ls.style.transform=d?'translate3d(0,'+d+'px,0)':''; }
     function measure(){ const top=sc.scrollTop; stage.style.height=''; base=stage.offsetHeight;
-      // Never shrink past the date row, so the panel can't slide over it.
-      const dt=document.querySelector('.hud.top .date'); MIN=Math.max(128,dt?dt.offsetTop+dt.offsetHeight+40:128);
+      // Never shrink past the date row, and keep room for a small Mimi under it (she shrinks, never vanishes).
+      const dt=document.querySelector('.hud.top .date'); MIN=Math.max(128,dt?dt.offsetTop+dt.offsetHeight+112:128);
       sc.scrollTop=top; apply(); }
     sc.addEventListener('scroll',()=>{ if(!raf) raf=requestAnimationFrame(apply); },{passive:true});
     addEventListener('resize',measure); measure();
