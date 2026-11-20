@@ -50,7 +50,9 @@
     o.connect(g).connect(a.destination); o.start(t); o.stop(t+d+.03); }
   const sfx={
     tap(){ tone(1200,.04,'sine',.05); },
-    check(){ tone(784,.1,'sine',.08); tone(1175,.18,'sine',.07,.07); tone(1568,.3,'sine',.04,.14); },
+    check(){ tone(784,.1,'sine',.08); tone(1175,.18,'sine',.07,.07); tone(1568,.3,'sine',.04,.14);
+      // Now and then Mimi meows when you finish a task (about one in three).
+      if(Math.random()<.35) setTimeout(()=>sfx.meow(),420); },
     uncheck(){ tone(600,.16,'sine',.07,0,380); },
     add(){ tone(392,.08,'triangle',.08); tone(587,.1,'triangle',.07,.06); tone(880,.16,'triangle',.05,.12); },
     del(){ tone(330,.22,'sine',.08,0,140); },
@@ -58,7 +60,16 @@
     pause(){ tone(660,.08,'sine',.06); tone(440,.12,'sine',.06,.07); },
     alarm(){ [0,.22,.44].forEach(d=>{tone(988,.18,'sine',.1,d);tone(1480,.18,'sine',.05,d);}); },
     win(){ [523,659,784,1047,1319,1568].forEach((f,i)=>tone(f,.45,'sine',.06,i*.08)); },
-    meow(){ tone(700,.12,'sine',.08,0,1050); tone(1000,.26,'sine',.07,.11,560); },
+    // A cat-like "mi-aow": a buzzy voice whose pitch rises then falls, shaped by two moving mouth resonances.
+    meow(){ const a=A(); if(!a) return; const t=a.currentTime+.01, d=.62+Math.random()*.18, p=.9+Math.random()*.25;
+      const o=a.createOscillator(), vib=a.createOscillator(), vg=a.createGain(), g=a.createGain(), f1=a.createBiquadFilter(), f2=a.createBiquadFilter(), mix=a.createGain();
+      o.type='sawtooth'; o.frequency.setValueAtTime(480*p,t); o.frequency.linearRampToValueAtTime(760*p,t+d*.35); o.frequency.exponentialRampToValueAtTime(420*p,t+d);
+      vib.frequency.value=6; vg.gain.value=9; vib.connect(vg).connect(o.frequency);
+      f1.type='bandpass'; f1.Q.value=5; f1.frequency.setValueAtTime(700,t); f1.frequency.linearRampToValueAtTime(1250,t+d*.4); f1.frequency.linearRampToValueAtTime(650,t+d);
+      f2.type='bandpass'; f2.Q.value=7; f2.frequency.setValueAtTime(1700,t); f2.frequency.linearRampToValueAtTime(2500,t+d*.4); f2.frequency.linearRampToValueAtTime(1300,t+d);
+      g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.32,t+.06); g.gain.setValueAtTime(.3,t+d*.6); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+      o.connect(f1); o.connect(f2); f1.connect(mix); f2.connect(mix); mix.gain.value=1.4; mix.connect(g).connect(a.destination);
+      o.start(t); vib.start(t); o.stop(t+d+.05); vib.stop(t+d+.05); },
     whoosh(){ tone(200,.25,'sine',.04,0,500); }
   };
   /* ---------- Ringtones (Settings › Ringtone, water screen) ---------- */
@@ -83,8 +94,13 @@
   function stopRing(){ try{ if(ringAudio) ringAudio.pause(); }catch(e){} }
   /* Mimi meows when the app opens (once the browser allows sound) and now and then while it stays open. */
   let openMeowed=false;
-  function openMeow(){ if(openMeowed||!soundOn||document.hidden) return; const a=A(); if(!a||a.state!=='running') return; openMeowed=true; sfx.meow(); try{ world.react('hello'); }catch(e){} }
-  setTimeout(openMeow,1200);
+  function openMeow(){ if(openMeowed||!soundOn||document.hidden) return; const a=A(); if(!a) return;
+    const go=()=>{ if(openMeowed||a.state!=='running') return; openMeowed=true; sfx.meow(); try{ world.react('hello'); world.say('Meow! 🐾',2000); }catch(e){} };
+    // The iPhone app lets sound play without a tap, so resume and meow straight away; a browser waits for the first tap.
+    if(a.state==='running') go(); else { try{ a.resume().then(go).catch(()=>{}); }catch(e){} } }
+  setTimeout(openMeow,700);
+  // Back to the app after a while away: a little hello meow again.
+  { let hiddenAt=0; document.addEventListener('visibilitychange',()=>{ if(document.hidden){ hiddenAt=Date.now(); return; } if(hiddenAt&&Date.now()-hiddenAt>10*60000&&soundOn){ setTimeout(()=>{ sfx.meow(); try{ world.react('hello'); }catch(e){} },500); } }); }
   ['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{ if(!openMeowed) setTimeout(openMeow,120); },{passive:true,capture:true}));
   (function randomMeow(){ setTimeout(()=>{ if(soundOn&&!document.hidden&&openMeowed){ sfx.meow(); try{ world.react('hello'); }catch(e){} } randomMeow(); },(4+Math.random()*7)*60000); })();
   function paintSound(){ $('sound').classList.toggle('off',!soundOn); $('wave').style.display=soundOn?'':'none'; $('sound').setAttribute('aria-label',soundOn?'Turn sound off':'Turn sound on'); }
@@ -191,7 +207,11 @@
   const PRIS=[{p:1,n:'High',c:'#E5484D'},{p:2,n:'Medium',c:'#F5A400'},{p:3,n:'Low',c:'#3B82F6'},{p:4,n:'Check later',c:'#7C8A90'}];
   const priOf=t=>PRIS.find(x=>x.p===Number(t&&t.pri))||null;
   const priRank=t=>{ const q=priOf(t); return q?q.p:3.5; };
-  const bySort=a=>a.map((t,i)=>[t,i]).sort((x,y)=>priRank(x[0])-priRank(y[0])||x[1]-y[1]).map(x=>x[0]);
+  // List order: priority, then the start time (reminder) of the day, then the oldest day first (carried-over tasks),
+  // then the order the tasks were added (first added on top).
+  const startKey=t=>t.remind&&t.remind.at?t.remind.at:'99:99';
+  const bySort=a=>a.map((t,i)=>[t,i]).sort((x,y)=>priRank(x[0])-priRank(y[0])||startKey(x[0]).localeCompare(startKey(y[0]))
+    ||(x[0].carriedFrom||'9999').localeCompare(y[0].carriedFrom||'9999')||y[1]-x[1]).map(x=>x[0]);
   fill($('newPri'),PRIS.map(x=>[x.p,x.p+' · '+x.n]),2);
   const paintPriDot=()=>{ const q=PRIS.find(x=>x.p===Number($('newPri').value)); $('newPriDot').style.background=q.c; $('newPriLbl').textContent='P'+q.p; };
   ['newCat','newMin','newBefore','eMin','eBefore'].forEach(id=>overlaySel($(id))); 
@@ -266,6 +286,10 @@
     $('listTitle').textContent=diff===0?'Today':fmt(current,{day:'numeric',month:'short'});
     $('meter').style.width=s.pct+'%';
     $('remain').textContent=s.done+'/'+s.total;
+    // Planned-time picker: times that would go past the day's available hours are greyed out.
+    { const used=counted(tasksFor(current)).reduce((a,x)=>a+(x.est||0),0), left=capHours()*60-used, sel=$('newMin');
+      [...sel.options].forEach(o=>{ const v=Number(o.value)||0; o.disabled=v>0&&v>left; });
+      if(sel.selectedOptions[0]&&sel.selectedOptions[0].disabled){ sel.value='0'; try{ syncSels(); }catch(e){} } }
     { const ct=counted(tasks), plan=ct.reduce((a,x)=>a+(x.est||0),0)*60000, spent=ct.reduce((a,x)=>a+elapsed(x),0), left=ct.filter(x=>!x.done).reduce((a,x)=>a+Math.max(0,(x.est||0)*60000-elapsed(x)),0), al=$('alloc'); al.textContent='';
       const part=(label,val,cls)=>{ if(al.childElementCount){ const sp=document.createElement('span'); sp.className='sep'; sp.textContent='·'; al.append(sp); } const e=document.createElement('span'); if(cls) e.className=cls; e.append(label+' '); const b=document.createElement('b'); b.textContent=val; e.append(b); al.append(e); };
       const byCat=new Map(); ct.forEach(x=>{ if(x.est){ const c=catOf(x); byCat.set(c.k,{c,ms:((byCat.get(c.k)||{}).ms||0)+x.est*60000}); } });
@@ -576,8 +600,10 @@
     if(at){ if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(at)) return {msg:'Enter the reminder time as hours and minutes.',field:'at'};
       const [y,mo,d]=k.split('-').map(Number), [h,m]=at.split(':').map(Number), when=Date.UTC(y,mo-1,d,h,m)-330*60000-(before||0)*60000;
       if(when<=Date.now()) return {msg:'That reminder time has already passed'+(k===t0?' today':'')+'. Pick a later time'+(before?' or a shorter “before”':'')+'.',field:'at'}; }
-    if(cat&&!catOf({cat}).noCount){ const plan=counted(tasksFor(k)).filter(x=>x.id!==id).reduce((a,x)=>a+(x.est||0),0)+est;
-      if(plan>24*60) return {msg:'That would plan more than 24 hours on this day. Shorten the time or move a task.',field:'est'}; }
+    if(est>0&&cat&&!catOf({cat}).noCount){ const used=counted(tasksFor(k)).filter(x=>x.id!==id).reduce((a,x)=>a+(x.est||0),0), cap=capHours()*60;
+      // Hours available per day (Settings › Planning): never plan more than that on one day.
+      if(used+est>cap){ const left=Math.max(0,cap-used);
+        return {msg:'Only '+capHours()+' h available '+(k===t0?'today':'on '+fmt(k,{day:'numeric',month:'short'}))+'. '+minLabel(used||0).replace(/^0 min$/,'Nothing')+' planned, '+(left?minLabel(left)+' left':'no time left')+'. Pick a shorter time or another day.',field:'est'}; } }
     return null; }
   function addError(msg,field){ const e=$('addErr'); e.className='err'; e.textContent='⚠ '+msg; const f=$('addForm'); f.classList.remove('bad'); void f.offsetWidth; f.classList.add('bad');
     const el={text:'newTask',at:'newAt',est:'newMin',cat:'newCat'}[field]; if(el){ $(el).classList.add('bad'); if(field==='at') setRem(true); try{$(el).focus();}catch(_){} }
@@ -621,7 +647,7 @@
   function paintEPris(){ const w=$('ePris'); w.textContent=''; PRIS.forEach(q=>{ const b=document.createElement('button'); b.type='button'; b.setAttribute('role','radio'); b.setAttribute('aria-checked',String(ePri===q.p));
     const d=document.createElement('i'); d.className='cdot'; d.style.background=q.c; b.append(d,q.p+' · '+q.n); b.addEventListener('click',()=>{ ePri=ePri===q.p?0:q.p; sfx.tap(); paintEPris(); }); w.append(b); }); }
   function esheet(open){ $('esheet').classList.toggle('open',open); $('esheet').setAttribute('aria-hidden',String(!open)); $('scrim').classList.toggle('open',open||$('sheet').classList.contains('open')||$('isheet').classList.contains('open')); if(!open) editing=null; }
-  function openEdit(task){ editing={id:task.id,k:current}; sfx.tap(); $('eText').value=task.text; eCat=catOf(task).k; paintECats(); ePri=priOf(task)?priOf(task).p:0; paintEPris();
+  function openEdit(task){ if(task.done){ toast('Finished tasks can’t be edited. Untick it first.'); return; } editing={id:task.id,k:current}; sfx.tap(); $('eText').value=task.text; eCat=catOf(task).k; paintECats(); ePri=priOf(task)?priOf(task).p:0; paintEPris();
     const sel=$('eMin'); if(![...sel.options].some(o=>o.value===String(task.est||0))){ const o=document.createElement('option'); o.value=String(task.est); o.textContent=minLabel(task.est); sel.append(o); } sel.value=String(task.est||0);
     $('eAt').value=task.remind&&task.remind.at||''; $('eBefore').value=String(task.remind&&task.remind.before||10); syncSels();
     { const t0=todayKey(); $('eDate').min=t0; $('eDate').max=shift(t0,365); $('eDate').value=current; eErr(''); }
@@ -634,7 +660,11 @@
   ['eText','eAt','eDate','eMin','eBefore'].forEach(i=>$(i).addEventListener('input',()=>eErr('')));
   $('eTom').addEventListener('click',()=>{ $('eDate').value=shift(todayKey(),1); eErr(''); sfx.tap(); });
   $('eNextWk').addEventListener('click',()=>{ $('eDate').value=shift(todayKey(),7); eErr(''); sfx.tap(); });
-  function moveTask(task,from,to){ const nt={...task,id:uid(),timer:pauseT(task.timer)}; delete nt.movedTo; if(nt.remind) nt.remind={at:nt.remind.at,before:nt.remind.before||0};
+  function moveTask(task,from,to){
+    if(task.done){ toast('Finished tasks stay on their day.'); return Promise.resolve(); }
+    { const bad=task.est?checkTask({text:task.text,est:task.est||0,at:'',before:0,cat:catOf(task).k,k:to}):null;
+      if(bad&&bad.field==='est'){ toast(bad.msg,true); world.react('sad'); return Promise.resolve(); } }
+    const nt={...task,id:uid(),timer:pauseT(task.timer)}; delete nt.movedTo; if(nt.remind) nt.remind={at:nt.remind.at,before:nt.remind.before||0};
     if(!nt.timer) delete nt.timer;
     return mutate(to,ts=>[nt,...ts]).then(()=>mutate(from,ts=>ts.filter(x=>x.id!==task.id))).then(()=>{
       const lbl=to===todayKey()?'today':to===shift(todayKey(),1)?'tomorrow':fmt(to,{weekday:'long',day:'numeric',month:'short'}), slbl=to===todayKey()?L('today'):to===shift(todayKey(),1)?L('tomorrow'):fmt(to,{day:'numeric',month:'long'});
@@ -766,6 +796,9 @@
   let irange='day';
   const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const bp=(x,y,w,h,r)=>{ r=Math.min(r,w/2,h); return h<=0?'':'M'+x+','+(y+h)+'V'+(y+r)+'Q'+x+','+y+' '+(x+r)+','+y+'H'+(x+w-r)+'Q'+(x+w)+','+y+' '+(x+w)+','+(y+r)+'V'+(y+h)+'Z'; };
+  const IGRAD='<defs><linearGradient id="igLav" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#9D84FF"/><stop offset="1" stop-color="#C9BAFF"/></linearGradient>'+
+    '<linearGradient id="igMint" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#3FBF8A"/><stop offset="1" stop-color="#9EEBC8"/></linearGradient>'+
+    '<linearGradient id="igSun" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF7A59"/><stop offset="1" stop-color="#FFC94D"/></linearGradient></defs>';
   const niceMax=v=>{ const steps=[30,60,90,120,180,240,360,480,600,900,1200]; return steps.find(s=>s>=v)||Math.ceil(v/60)*60; };
   function vbars(id,title,keys,vals,max,color,fmtV,tickFmt,labelEvery,tipOf){
     const W=340,H=150,L=44,B=20,T=8, iw=W-L-4, ih=H-B-T, n=keys.length, slot=iw/n, bw=Math.max(3,Math.min(26,slot-2));
@@ -773,23 +806,36 @@
     [0,.5,1].forEach(f=>{ const y=T+ih-f*ih; g+='<line class="grid" x1="'+L+'" x2="'+(W-4)+'" y1="'+y+'" y2="'+y+'"/><text x="'+(L-5)+'" y="'+(y+3)+'" text-anchor="end">'+esc(tickFmt(max*f))+'</text>'; });
     keys.forEach((k,i)=>{ const x=L+i*slot+(slot-bw)/2, h=vals[i]>0?Math.max(2,vals[i]/max*ih):0;
       g+='<rect class="hit" data-i="'+i+'" x="'+(L+i*slot)+'" y="'+T+'" width="'+slot+'" height="'+(ih+B)+'"/>';
-      g+='<path class="mk" data-i="'+i+'" d="'+bp(x,T+ih-h,bw,h,4)+'" style="fill:'+color+'"/>';
+      g+='<path class="mk'+(k===todayKey()?' now':'')+'" data-i="'+i+'" d="'+bp(x,T+ih-h,bw,h,6)+'" style="fill:'+(k===todayKey()?'url(#igSun)':color)+';--d:'+(i*.03).toFixed(2)+'s"/>';
       if(i%labelEvery===0||i===n-1) g+='<text x="'+(L+i*slot+slot/2)+'" y="'+(H-5)+'" text-anchor="middle"'+(k===current?' style="fill:var(--ink);font-weight:600"':'')+'>'+esc(labelEvery>1?fmt(k,{day:'numeric'}):fmt(k,{weekday:'short'}).slice(0,3))+'</text>'; });
     const box=document.createElement('div'); box.className='cbox';
-    box.innerHTML='<h4>'+esc(title)+'</h4><div class="tip" id="tip-'+id+'">Tap a bar for details</div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(title)+'">'+g+'</svg>';
+    box.innerHTML='<h4>'+esc(title)+'</h4><div class="tip" id="tip-'+id+'">Tap a bar for details</div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(title)+'">'+IGRAD+g+'</svg>';
     const tip=box.querySelector('.tip');
     box.querySelectorAll('.hit').forEach(h=>{ const i=+h.dataset.i; const show=()=>{ tip.textContent=tipOf(i); tip.style.color='var(--ink)'; box.querySelectorAll('.mk').forEach(m=>m.classList.toggle('on',+m.dataset.i===i)); };
       h.addEventListener('pointerenter',show); h.addEventListener('click',()=>{ show(); sfx.tap(); }); });
     return box;
   }
-  function kpis(items){ const d=document.createElement('div'); d.className='kpis'; items.forEach(([v,l])=>{ const k=document.createElement('div'); k.className='kpi'; const b=document.createElement('b'); b.textContent=v; const s=document.createElement('span'); s.textContent=l; k.append(b,s); d.append(k); }); return d; }
+  const KIC={done:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1L3.2 9.4l6.1-.8z"/>',tasks:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    focus:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',plan:'<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M10 2.5h4"/>',best:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>'};
+  function kpis(items){ const d=document.createElement('div'); d.className='kpis'; items.forEach(([v,l,ic,c],i)=>{ const k=document.createElement('div'); k.className='kpi'; k.style.setProperty('--d',(i*.06)+'s');
+    if(ic){ const t=document.createElement('i'); t.style.background=c; t.innerHTML='<svg viewBox="0 0 24 24">'+KIC[ic]+'</svg>'; k.append(t); }
+    const tx=document.createElement('div'); const b=document.createElement('b'); b.textContent=v; const s=document.createElement('span'); s.textContent=l; tx.append(b,s); k.append(tx); d.append(k); }); return d; }
+  // The summary card at the top of Insights: a progress ring with Mimi's take on it.
+  function ihero(pct,title,sub){ const h=document.createElement('div'); h.className='ihero'; const C=2*Math.PI*42;
+    const mood=pct>=100?'🎉':pct>=70?'😸':pct>=40?'🙂':pct>0?'💪':'🌱';
+    h.innerHTML='<div class="iring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="42"/><circle class="f" cx="50" cy="50" r="42" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'"/></svg><b>'+pct+'%</b><span>'+mood+'</span></div>'+
+      '<div class="itx"><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small></div>';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ const f=h.querySelector('.f'); if(f) f.style.strokeDashoffset=(C*(1-Math.min(100,pct)/100)).toFixed(1); }));
+    return h; }
   function renderInsights(){
     const body=$('ibody'); body.textContent='';
     const head=document.createElement('div'); head.className='irange';
     if(irange==='day'){
       const ts=counted(tasksFor(current)), s=stats(tasksFor(current)), f=focusMs(current), plan=ts.reduce((a,x)=>a+(x.est||0),0);
       head.textContent=fmt(current,{weekday:'long',day:'numeric',month:'long'}); body.append(head);
-      body.append(kpis([[s.pct+'%','Done'],[s.done+'/'+s.total,'Tasks'],[hm(f),'Focused'],[plan?hm(plan*60000):'–','Planned']]));
+      { const left=s.total-s.done; body.append(ihero(s.pct,!s.total?'A blank page':s.pct>=100?'Everything done!':s.pct>=70?'Great going!':s.done?'Good progress':'Ready when you are',
+          !s.total?'No tasks on this day yet.':left?left+' task'+(left>1?'s':'')+' left · '+hm(f)+' focused':'All '+s.total+' ticked · '+hm(f)+' focused')); }
+      body.append(kpis([[s.done+'/'+s.total,'Tasks done','tasks','#7FE3B8'],[hm(f),'Focused','focus','#FFB38F'],[plan?hm(plan*60000):'–','Planned','plan','#C2B0FF'],[capHours()+'h','Available','best','#FFE08A']]));
       if(!ts.length){ const n=document.createElement('div'); n.className='inone'; n.textContent='No tasks on this day yet.'; body.append(n); return; }
       // horizontal bars: time spent vs planned, per task
       const rows=ts.map(x=>({t:x.text,sp:elapsed(x)/60000,pl:x.est||0,done:x.done}));
@@ -799,12 +845,12 @@
       [0,.5,1].forEach(fr=>{ const x=L+fr*iw; g+='<line class="grid" x1="'+x+'" x2="'+x+'" y1="'+T+'" y2="'+(H-16)+'"/><text x="'+x+'" y="'+(H-4)+'" text-anchor="middle">'+esc(hm(max*fr*60000))+'</text>'; });
       rows.forEach((r,i)=>{ const y=T+i*rh+5, bh=14;
         g+='<text x="'+(L-8)+'" y="'+(y+11)+'" text-anchor="end" style="fill:var(--ink);font-family:var(--body);font-size:11px">'+(r.done?'✓ ':'')+esc(short(r.t,17))+'</text>';
-        if(r.pl) g+='<rect x="'+L+'" y="'+y+'" width="'+(r.pl/max*iw)+'" height="'+bh+'" rx="4" style="fill:var(--fill)"/>';
+        if(r.pl) g+='<rect x="'+L+'" y="'+y+'" width="'+(r.pl/max*iw)+'" height="'+bh+'" rx="7" style="fill:var(--fill)"/>';
         const w=r.sp>0?Math.max(3,Math.min(r.sp,max)/max*iw):0;
-        if(w) g+='<rect x="'+L+'" y="'+(y+2)+'" width="'+w+'" height="'+(bh-4)+'" rx="4" style="fill:'+(r.pl&&r.sp>r.pl?'var(--red)':'var(--coral)')+'"/>';
+        if(w) g+='<rect class="hb" x="'+L+'" y="'+(y+2)+'" width="'+w+'" height="'+(bh-4)+'" rx="5" style="fill:'+(r.pl&&r.sp>r.pl?'var(--red)':'url(#igLav)')+';--d:'+(i*.05)+'s"/>';
         g+='<text x="'+(W-2)+'" y="'+(y+11)+'" text-anchor="end">'+esc(hm(r.sp*60000)+(r.pl?' / '+hm(r.pl*60000):''))+'</text>'; });
       const box=document.createElement('div'); box.className='cbox';
-      box.innerHTML='<h4>Time per task</h4><div class="key"><span><i style="background:var(--coral)"></i>Time spent</span><span><i style="background:var(--fill);box-shadow:inset 0 0 0 1px var(--line)"></i>Planned</span></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Time spent and planned for each task">'+g+'</svg>';
+      box.innerHTML='<h4>Time per task</h4><div class="key"><span><i style="background:linear-gradient(90deg,#9D84FF,#C2B0FF)"></i>Time spent</span><span><i style="background:var(--fill);box-shadow:inset 0 0 0 1px var(--line)"></i>Planned</span></div><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Time spent and planned for each task">'+IGRAD+g+'</svg>';
       body.append(box);
       return;
     }
@@ -814,12 +860,14 @@
     const doneTot=ss.reduce((a,s)=>a+s.done,0), allTot=ss.reduce((a,s)=>a+s.total,0), fTot=fs.reduce((a,v)=>a+v,0);
     let best=-1; ss.forEach((s,i)=>{ if(s.total&&(best<0||s.pct>ss[best].pct||(s.pct===ss[best].pct&&s.done>ss[best].done))) best=i; });
     head.textContent=fmt(keys[0],{day:'numeric',month:'short'})+' – '+fmt(keys[n-1],{day:'numeric',month:'short',year:'numeric'}); body.append(head);
-    body.append(kpis([[withT.length?avg+'%':'–','Avg done'],[doneTot+'/'+allTot,'Tasks done'],[hm(fTot*60000),'Focused'],[best>=0?fmt(keys[best],{day:'numeric',month:'short'}):'–','Best day']]));
+    body.append(ihero(avg,!allTot?'Nothing planned yet':avg>=80?'A brilliant '+irange+'!':avg>=50?'A solid '+irange:'Every bit counts',
+      allTot?doneTot+' of '+allTot+' tasks done · '+hm(fTot*60000)+' focused':'Add tasks to see your '+irange+' here.'));
+    body.append(kpis([[withT.length?avg+'%':'–','Avg done','done','#C2B0FF'],[doneTot+'/'+allTot,'Tasks done','tasks','#7FE3B8'],[hm(fTot*60000),'Focused','focus','#FFB38F'],[best>=0?fmt(keys[best],{day:'numeric',month:'short'}):'–','Best day','best','#FFE08A']]));
     const every=n===7?1:5;
-    body.append(vbars('pct','Tasks done each day',keys,ss.map(s=>s.pct),100,'var(--coral)',v=>v+'%',v=>Math.round(v)+'%',every,
+    body.append(vbars('pct','Tasks done each day',keys,ss.map(s=>s.pct),100,'url(#igLav)',v=>v+'%',v=>Math.round(v)+'%',every,
       i=>fmt(keys[i],{weekday:'short',day:'numeric',month:'short'})+' · '+(ss[i].total?ss[i].pct+'% ('+ss[i].done+' of '+ss[i].total+')':'no tasks')));
     const fmax=niceMax(Math.max(30,...fs));
-    body.append(vbars('focus','Focus time each day',keys,fs,fmax,'var(--teal)',v=>hm(v*60000),v=>hm(v*60000),every,
+    body.append(vbars('focus','Focus time each day',keys,fs,fmax,'url(#igMint)',v=>hm(v*60000),v=>hm(v*60000),every,
       i=>fmt(keys[i],{weekday:'short',day:'numeric',month:'short'})+' · '+hm(fs[i]*60000)+' focused'));
   }
   function isheet(open){ $('isheet').classList.toggle('open',open); $('scrim').classList.toggle('open',open||$('sheet').classList.contains('open')); $('isheet').setAttribute('aria-hidden',String(!open)); if(open){ renderInsights(); $('iClose').focus(); } }

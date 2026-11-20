@@ -514,3 +514,41 @@ html.has-mini .toast{bottom:calc(144px + env(safe-area-inset-bottom,0px))}
 .ebtns .save,.wbtn{background:linear-gradient(180deg,#B9A6FF,#9D84FF);color:#17112E;box-shadow:none}
 .linkbtn{color:var(--teal)}
 @media (max-height:700px){ .stage.mw .hud.bot{justify-content:flex-end} }
+
+/* ---------- Insights, redesigned ---------- */
+.isheet{max-height:90%}
+.seg3{border-radius:16px;padding:4px;background:var(--fill)}
+.seg3 button{height:36px;border-radius:12px;font:500 14px var(--display);transition:background .25s,color .25s,transform .2s var(--spring)}
+.seg3 button[aria-selected="true"]{background:linear-gradient(180deg,#B9A6FF,#9D84FF);color:#17112E;box-shadow:0 6px 14px -8px #7C5CF0}
+.seg3 button:active{transform:scale(.95)}
+.irange{font:500 12.5px var(--body);letter-spacing:.02em}
+.ihero{display:flex;align-items:center;gap:16px;padding:16px;border-radius:24px;color:#17112E;
+  background:linear-gradient(140deg,#D6CBFF 0%,#B9A6FF 55%,#A58CFF 100%);box-shadow:0 14px 30px -18px #7C5CF0;animation:lcIn .5s var(--spring) both}
+.iring{position:relative;flex:none;width:96px;height:96px}
+.iring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.iring circle{fill:none;stroke-width:9}
+.iring .t{stroke:rgba(23,17,46,.12)}
+.iring .f{stroke:#17112E;stroke-linecap:round;transition:stroke-dashoffset 1.2s var(--spring) .15s}
+.iring b{position:absolute;inset:0;display:grid;place-items:center;font:500 22px var(--display);padding-bottom:10px}
+.iring span{position:absolute;left:0;right:0;bottom:20px;text-align:center;font-size:15px;animation:mwFloat 2.6s ease-in-out infinite}
+.itx{display:flex;flex-direction:column;gap:4px;min-width:0}
+.itx strong{font:500 20px/1.15 var(--display)}
+.itx small{font:500 13px/1.4 var(--body);color:#3A2C78}
+.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kpi{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:18px;animation:lcIn .5s var(--spring) both;animation-delay:var(--d,0s)}
+.kpi>i{flex:none;width:36px;height:36px;border-radius:12px;display:grid;place-items:center}
+.kpi>i svg{width:18px;height:18px;fill:none;stroke:#17112E;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.kpi>div{min-width:0}
+.kpi b{font:500 18px/1.15 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi span{font:500 10.5px var(--body);letter-spacing:.06em}
+.cbox{border-radius:20px;padding:14px 14px 10px;animation:lcIn .55s var(--spring) .1s both}
+.cbox h4{font:500 15px var(--display)}
+.cbox .tip{font:500 12.5px var(--body)}
+.cbox svg text{font:500 10px var(--body)}
+.cbox svg .grid{stroke-dasharray:3 4}
+.cbox svg .mk{transform-box:fill-box;transform-origin:50% 100%;animation:ibGrow .7s var(--spring) both;animation-delay:var(--d,0s)}
+.cbox svg .mk.on{opacity:1;filter:brightness(1.12) drop-shadow(0 4px 6px rgba(124,92,240,.35))}
+.cbox svg .hb{transform-box:fill-box;transform-origin:0 50%;animation:ibGrowX .7s var(--spring) both;animation-delay:var(--d,0s)}
+@keyframes ibGrow{from{transform:scaleY(0)}}
+@keyframes ibGrowX{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){ .ihero,.kpi,.cbox,.cbox svg .mk,.cbox svg .hb,.iring span{animation:none} }
