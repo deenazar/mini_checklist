@@ -434,7 +434,7 @@ html.mw-rest .lglass *,html.mw-hidden .lglass *{animation-play-state:paused!impo
 
 /* ---------- 4.3 ---------- */
 /* Finished tasks: no "…" menu (tap the tick to undo, swipe left to delete) */
-.task.done .more{visibility:hidden;pointer-events:none}
+.task.done .more{display:none}
 
 /* "Up next" bar above the bottom bar */
 .lmini{position:fixed;z-index:16;left:max(18px,env(safe-area-inset-left,0px));right:max(18px,env(safe-area-inset-right,0px));max-width:500px;margin:0 auto;
@@ -473,3 +473,44 @@ html.has-mini .toast{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
 .stage.mw .hud.bot{opacity:calc(1 - var(--cp,0) * 2.2)}
 .stage.mw.shrunk .hud.bot,.stage.mw.shrunk .mw-week{pointer-events:none}
 .stage.mw.shrunk .mw-mimi{pointer-events:auto}
+
+/* ---------- 4.3: docked tab bar, draggable panel handle ---------- */
+/* The tab bar sits flush on the bottom edge, like a normal iPhone tab bar */
+.lnav{left:0;right:0;bottom:0;max-width:none;margin:0;height:calc(64px + env(safe-area-inset-bottom,0px));padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));
+  border-radius:22px 22px 0 0;border-width:1px 0 0;box-shadow:0 -10px 28px -18px rgba(10,6,30,.45);align-items:center}
+.lnav .ti{width:34px;height:34px;border-radius:11px}
+.lnav .ti svg{width:18px;height:18px}
+.lmini{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+.scroll{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+html.has-mini .scroll{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+html.has-mini .toast{bottom:calc(144px + env(safe-area-inset-bottom,0px))}
+.fab{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+/* The panel's handle: bigger to grab, drag the card up or down, or tap it */
+.panel > .pin > .handle{position:relative;width:46px;height:5px;background:color-mix(in srgb,var(--sec) 45%,transparent);touch-action:none;cursor:grab;transition:width .2s,background .2s}
+.panel > .pin > .handle::before{content:"";position:absolute;left:-160px;right:-160px;top:-14px;bottom:-12px}
+.panel > .pin > .handle:active{width:60px;background:var(--lav)}
+/* A shorter header so the list gets room (Mimi still has plenty of space) */
+.stage{height:clamp(250px,34vh,320px)}
+@media (max-height:700px){ .stage.mw{height:calc(clamp(220px,33vh,280px) + var(--safe-top))} }
+/* Filters only when there is more than one list to pick from */
+.filters.lc-one{display:none}
+/* Short screens (iPhone SE): tighter panel so the list shows */
+@media (max-height:700px){
+  .pin{gap:8px}
+  .dchip{min-height:44px;padding:4px 0}
+  .wstrip{padding:5px 7px 5px 8px}
+  .wstrip .wdrop.has-glass{width:34px;height:38px}
+  .wstrip .wdrop.has-glass svg.lglass{width:30px;height:38px}
+  .wq{height:36px}
+  .add>.atop input[type=text]{padding:7px 6px}
+  .add .aplus{width:36px;height:36px}
+  .alloc{display:none}
+  .lmini{height:52px}
+  .lm-av{width:40px;height:40px}
+  .stage.mw .hud.bot .chips{display:none}
+}
+/* Sheets: lavender actions to match the rest */
+.ebtns .save,.wbtn{background:linear-gradient(180deg,#B9A6FF,#9D84FF);color:#17112E;box-shadow:none}
+.linkbtn{color:var(--teal)}
+@media (max-height:700px){ .stage.mw .hud.bot{justify-content:flex-end} }

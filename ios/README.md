@@ -8,7 +8,11 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 
 - **Up next bar**: today’s plan moved out of the list into a small bar just above the bottom bar, like a music app’s mini player. It shows the next task with a ▶ to start it (and open the focus screen), the running task with its time left, or “All done 🎉” to see your day.
 - **Mimi shrinks and grows as you scroll** the task list, instead of fading away. The week chart and stats fade, the date stays.
-- **Finished tasks** no longer show the “…” menu. Tap the tick to undo, swipe left to delete.
+- **Finished tasks** have no “…” menu at all. Tap the tick to undo, swipe left to delete.
+- **Drag the card**: grab the little handle at the top of the task card and drag it up (Mimi shrinks, more room for tasks) or down (Mimi grows back). A tap on the handle switches between the two.
+- **Tab bar** now sits flush on the bottom edge, like a normal iPhone tab bar.
+- **More room for tasks**: a shorter header, and the All / list filter only shows when there’s more than one list. On small iPhones the panel is tighter, and the app opens with Mimi small when the list would otherwise be hidden.
+- Edit and Water sheets use the lavender buttons too.
 - **Settings › Account & sync** no longer shows “Signed in as …”. It shows just the sync state, Sync now and Sign out.
 - Fixed: the empty water glass sat too low in the water card.
 

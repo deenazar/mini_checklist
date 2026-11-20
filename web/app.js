@@ -330,10 +330,10 @@
     chk.setAttribute('role','checkbox'); chk.setAttribute('aria-checked',String(!!task.done)); chk.setAttribute('aria-label','Done: '+task.text);
     chk.addEventListener('click',()=>toggleDone(task));
     const more=document.createElement('button'); more.type='button'; more.className='more'; more.innerHTML=DOTS; more.setAttribute('aria-label','More options for '+task.text);
-    more.setAttribute('aria-expanded',String(openId===task.id)); more.hidden=ro;
+    more.setAttribute('aria-expanded',String(openId===task.id)); more.hidden=ro||!!task.done; // finished tasks: no menu
     more.addEventListener('click',()=>{sfx.tap();openId=openId===task.id?null:task.id;render();});
     row.append(ring,body,chk,more); tile.append(row);
-    if(openId===task.id&&!ro){
+    if(openId===task.id&&!ro&&!task.done){
       const a=document.createElement('div'); a.className='actions';
       const restart=document.createElement('button'); restart.type='button'; restart.className='act'; restart.textContent='↺ Start again';
       restart.addEventListener('click',()=>{ alarmed.delete(task.id); start(task,true); });

@@ -190,6 +190,54 @@
     setTimeout(function () { b.remove(); }, 750);
   }, true);
 
+  /* ---------- Drag the panel's handle up or down: the whole card slides, and Mimi shrinks or grows ---------- */
+  (function () {
+    var sc = $('scroll'), sp = $('spacer'), hd = doc.querySelector('.panel > .pin > .handle') || doc.querySelector('.panel .handle');
+    if (!sc || !sp || !hd) return;
+    hd.setAttribute('role', 'button');
+    hd.setAttribute('tabindex', '0');
+    hd.setAttribute('aria-label', 'Drag up or down to resize. Tap to switch.');
+    var range = function () { return sp.offsetHeight || 0; };
+    var drag = null;
+    function snap(toTop) { sc.scrollTo({ top: toTop ? range() : 0, behavior: reduce ? 'auto' : 'smooth' }); }
+    hd.addEventListener('pointerdown', function (e) {
+      drag = { y: e.clientY, top: sc.scrollTop, last: e.clientY, t: Date.now(), v: 0, moved: false };
+      try { hd.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    hd.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var dy = e.clientY - drag.y;
+      if (Math.abs(dy) > 4) drag.moved = true;
+      var now = Date.now();
+      drag.v = (e.clientY - drag.last) / Math.max(1, now - drag.t);
+      drag.last = e.clientY; drag.t = now;
+      if (drag.moved) sc.scrollTop = Math.max(0, drag.top - dy);
+    });
+    function up() {
+      if (!drag) return;
+      var d = drag; drag = null;
+      var r = range(), top = sc.scrollTop;
+      if (!d.moved) { buzz(10); snap(top < r / 2); return; }
+      if (top > r) return; // dragged into the list itself: leave it there
+      if (d.v < -0.3) snap(true); else if (d.v > 0.3) snap(false); else snap(top > r / 2);
+    }
+    hd.addEventListener('pointerup', up);
+    hd.addEventListener('pointercancel', up);
+    hd.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); snap(sc.scrollTop < range() / 2); } });
+  })();
+
+  /* ---------- Less clutter: hide the list filter when there's only one list today ---------- */
+  var filters = $('filters');
+  function paintFilters() { if (filters) filters.classList.toggle('lc-one', filters.querySelectorAll('.fchip').length <= 2 && !filters.querySelector('.fchip[aria-pressed="true"]:not(:first-child)')); }
+  if (filters && window.MutationObserver) new MutationObserver(paintFilters).observe(filters, { childList: true, subtree: true, attributes: true });
+  paintFilters();
+
+  /* ---------- Small screens open with Mimi small, so the list is visible straight away ---------- */
+  setTimeout(function () {
+    var sc = $('scroll'), sp = $('spacer');
+    if (sc && sp && sc.clientHeight < 220 && sc.scrollTop === 0) sc.scrollTop = sp.offsetHeight;
+  }, 700);
+
   /* ---------- Bottom bar ---------- */
   var nav = el('nav', 'lnav');
   nav.setAttribute('aria-label', 'Main');
