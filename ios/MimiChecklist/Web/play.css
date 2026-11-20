@@ -139,3 +139,10 @@ html.mw-rest .room *{animation-play-state:paused!important}
 .rm-mseg .rm-mbtn.sel{background:#fff;box-shadow:0 4px 10px -6px rgba(0,0,0,.35)}
 .rm-macts{display:flex;gap:10px;margin-top:14px}
 .rm-macts .rm-mbtn{flex:1}
+
+/* 3D Mimi (mimi3d.js): the canvas fills her box; the drawn Mimi and its CSS moves step aside */
+.rm-mimi.is-3d .mw-figure{animation:none!important;transform:none!important}
+.rm-mimi.is-3d .mw-figure>svg{display:none}
+.rm-mimi.is-3d .mw-shadow{display:none}
+.m3-canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}
+.rm-tools{grid-template-columns:repeat(4,minmax(0,1fr))}

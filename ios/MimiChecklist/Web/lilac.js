@@ -3,7 +3,7 @@
  *
  *  - Add a task: one big field with a "+" button; its options (list, priority, time, reminder, daily) open while you type.
  *  - Water: a little splash and "+250 ml" float up when you log a drink; the drop fills with the day's water.
- *  - Today's plan card at the top of the list: how the day is going, and one button for the next step.
+ *  - An "Up next" bar above the bottom bar: the next task (or the running one) and one button to start or open it.
  *  - A bottom bar: Today, Notes, Room, Insights, Settings (it hides while you type or a sheet is open).
  *  - Focus screen: the running task full screen, with Mimi, a ring, the time left, Pause/Resume and Done.
  *  - Day complete: when every task is ticked, Mimi celebrates with a trophy, confetti and your week.
@@ -142,8 +142,8 @@
     frac = Math.max(0, Math.min(1, frac || 0));
     var prev = parseFloat(host.dataset.lv || '-1');
     host.style.setProperty('--lv', frac.toFixed(3));
-    host.classList.toggle('full', frac >= 1);
-    host.classList.toggle('empty', frac <= 0);
+    host.classList.toggle('gl-full', frac >= 1);
+    host.classList.toggle('gl-empty', frac <= 0);
     if (prev >= 0 && frac > prev + 0.001 && !reduce) {
       host.classList.remove('glug'); void host.offsetWidth; host.classList.add('glug');
       clearTimeout(host._glugT); host._glugT = setTimeout(function () { host.classList.remove('glug'); }, 1300);
@@ -190,6 +190,54 @@
     setTimeout(function () { b.remove(); }, 750);
   }, true);
 
+  /* ---------- Drag the panel's handle up or down: the whole card slides, and Mimi shrinks or grows ---------- */
+  (function () {
+    var sc = $('scroll'), sp = $('spacer'), hd = doc.querySelector('.panel > .pin > .handle') || doc.querySelector('.panel .handle');
+    if (!sc || !sp || !hd) return;
+    hd.setAttribute('role', 'button');
+    hd.setAttribute('tabindex', '0');
+    hd.setAttribute('aria-label', 'Drag up or down to resize. Tap to switch.');
+    var range = function () { return sp.offsetHeight || 0; };
+    var drag = null;
+    function snap(toTop) { sc.scrollTo({ top: toTop ? range() : 0, behavior: reduce ? 'auto' : 'smooth' }); }
+    hd.addEventListener('pointerdown', function (e) {
+      drag = { y: e.clientY, top: sc.scrollTop, last: e.clientY, t: Date.now(), v: 0, moved: false };
+      try { hd.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    hd.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var dy = e.clientY - drag.y;
+      if (Math.abs(dy) > 4) drag.moved = true;
+      var now = Date.now();
+      drag.v = (e.clientY - drag.last) / Math.max(1, now - drag.t);
+      drag.last = e.clientY; drag.t = now;
+      if (drag.moved) sc.scrollTop = Math.max(0, drag.top - dy);
+    });
+    function up() {
+      if (!drag) return;
+      var d = drag; drag = null;
+      var r = range(), top = sc.scrollTop;
+      if (!d.moved) { buzz(10); snap(top < r / 2); return; }
+      if (top > r) return; // dragged into the list itself: leave it there
+      if (d.v < -0.3) snap(true); else if (d.v > 0.3) snap(false); else snap(top > r / 2);
+    }
+    hd.addEventListener('pointerup', up);
+    hd.addEventListener('pointercancel', up);
+    hd.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); snap(sc.scrollTop < range() / 2); } });
+  })();
+
+  /* ---------- Less clutter: hide the list filter when there's only one list today ---------- */
+  var filters = $('filters');
+  function paintFilters() { if (filters) filters.classList.toggle('lc-one', filters.querySelectorAll('.fchip').length <= 2 && !filters.querySelector('.fchip[aria-pressed="true"]:not(:first-child)')); }
+  if (filters && window.MutationObserver) new MutationObserver(paintFilters).observe(filters, { childList: true, subtree: true, attributes: true });
+  paintFilters();
+
+  /* ---------- Small screens open with Mimi small, so the list is visible straight away ---------- */
+  setTimeout(function () {
+    var sc = $('scroll'), sp = $('spacer');
+    if (sc && sp && sc.clientHeight < 220 && sc.scrollTop === 0) sc.scrollTop = sp.offsetHeight;
+  }, 700);
+
   /* ---------- Bottom bar ---------- */
   var nav = el('nav', 'lnav');
   nav.setAttribute('aria-label', 'Main');
@@ -216,62 +264,66 @@
   syncNav();
   if ($('setBtn')) $('setBtn').style.display = 'none';
 
-  /* ---------- Today's plan card ---------- */
+  /* ---------- "Up next" bar: floats just above the bottom bar, like a music app's mini player ---------- */
   var scroll = $('scroll'), list = $('list');
-  var plan = el('section', 'lplan');
+  var plan = el('section', 'lmini');
   plan.setAttribute('aria-live', 'polite');
-  plan.innerHTML = '<div class="cap"></div><h3></h3><p></p><button class="go" type="button"></button><div class="pbar"><i></i></div><div class="art" aria-hidden="true"></div>';
-  if (scroll && list) scroll.insertBefore(plan, list);
-  // While the list scrolls, the header shrinks and app.js shifts the list to match; the card moves with it.
-  if (list && window.MutationObserver) new MutationObserver(function () { plan.style.transform = list.style.transform; })
-    .observe(list, { attributes: true, attributeFilter: ['style'] });
-  var pCap = plan.querySelector('.cap'), pH = plan.querySelector('h3'), pP = plan.querySelector('p'), pGo = plan.querySelector('.go'), pBar = plan.querySelector('.pbar i'), pArt = plan.querySelector('.art');
+  plan.hidden = true;
+  plan.innerHTML = '<span class="lm-av" aria-hidden="true"></span><span class="lm-tx"><small class="cap"></small><b class="lm-t"></b><small class="lm-p"></small></span>' +
+    '<button class="go" type="button"></button><span class="pbar" aria-hidden="true"><i></i></span>';
+  doc.body.appendChild(plan);
+  var pCap = plan.querySelector('.cap'), pH = plan.querySelector('.lm-t'), pP = plan.querySelector('.lm-p'), pGo = plan.querySelector('.go'), pBar = plan.querySelector('.pbar i'), pArt = plan.querySelector('.lm-av');
   var planAction = null, planSig = '';
   function paintArt() { pArt.innerHTML = Art.cat('plan'); }
   paintArt();
   Art.onChange && Art.onChange(paintArt);
+  function showPlan(on) { plan.hidden = !on; html.classList.toggle('has-mini', on); }
   function paintPlan() {
     var title = $('listTitle'), isToday = !title || title.textContent === 'Today';
-    plan.hidden = !isToday;
-    if (!isToday) return;
+    if (!isToday) { showPlan(false); return; }
     var d = A.today(), r = A.running(), sig;
-    if (!d.ready) { plan.hidden = true; return; }
+    if (!d.ready || (!d.total && !r)) { showPlan(false); planSig = 'none'; return; }
+    showPlan(true);
     if (r) {
       var left = r.est ? r.est - r.elapsed : 0;
-      sig = 'run' + r.id + Math.floor(r.elapsed / 30000);
-      if (sig === planSig) { pP.textContent = r.est ? (left >= 0 ? clock(left) + ' left' : clock(-left) + ' over') : clock(r.elapsed) + ' so far'; return; }
-      plan.classList.remove('all');
+      var tm = r.est ? (left >= 0 ? clock(left) + ' left' : clock(-left) + ' over') : clock(r.elapsed) + ' so far';
+      pP.textContent = tm;
+      if (r.est) pBar.style.width = Math.min(100, r.elapsed / r.est * 100).toFixed(1) + '%';
+      sig = 'run' + r.id;
+      if (sig === planSig) return;
+      plan.className = 'lmini run';
       pCap.textContent = 'Focusing now';
-      pH.textContent = short(r.text, 46);
-      pP.textContent = r.est ? (left >= 0 ? clock(left) + ' left' : clock(-left) + ' over') : clock(r.elapsed) + ' so far';
-      pGo.innerHTML = 'Open focus ' + ICON.arrow;
+      pH.textContent = r.text;
+      pGo.innerHTML = ICON.arrow;
+      pGo.setAttribute('aria-label', 'Open focus');
       planAction = openFocus;
-    } else if (!d.total) {
-      // An empty day: the friendlier empty state below says it all.
-      plan.hidden = true; planSig = 'none'; return;
     } else if (d.done >= d.total) {
       sig = 'all' + d.total;
       if (sig === planSig) return;
-      plan.classList.add('all');
-      pCap.textContent = greet() + ' · today’s plan';
+      plan.className = 'lmini all';
+      pCap.textContent = 'Today';
       pH.textContent = 'All ' + d.total + ' done! 🎉';
-      pP.textContent = 'Every box ticked. Mimi is proud of you.';
-      pGo.innerHTML = 'See my day ' + ICON.arrow;
+      pP.textContent = 'Tap to see your day';
+      pGo.innerHTML = ICON.star;
+      pGo.setAttribute('aria-label', 'See my day');
       planAction = openDone;
+      pBar.style.width = '100%';
     } else {
       sig = 'some' + d.done + '/' + d.total + d.next;
       if (sig === planSig) return;
-      plan.classList.remove('all');
-      pCap.textContent = greet() + ' · today’s plan';
-      pH.textContent = d.done + ' of ' + d.total + ' done. ' + (d.pct >= 60 ? 'Almost there.' : d.done ? 'Keep going.' : 'Let’s start.');
-      pP.textContent = 'Next: ' + d.next;
-      pGo.innerHTML = 'Start next task ' + ICON.play;
+      plan.className = 'lmini';
+      pCap.textContent = 'Up next · ' + d.done + ' of ' + d.total + ' done';
+      pH.textContent = d.next;
+      pP.textContent = '';
+      pGo.innerHTML = ICON.play;
+      pGo.setAttribute('aria-label', 'Start next task');
       planAction = function () { A.focusNext(); setTimeout(function () { if (A.running()) openFocus(); }, 250); };
+      pBar.style.width = d.pct + '%';
     }
-    if (planSig && planSig !== sig && !reduce) { plan.classList.remove('bump'); void plan.offsetWidth; plan.classList.add('bump'); }
+    if (planSig && planSig !== 'none' && planSig !== sig && !reduce) { plan.classList.remove('bump'); void plan.offsetWidth; plan.classList.add('bump'); }
     planSig = sig;
-    pBar.style.width = (d.total ? d.pct : 0) + '%';
   }
+  plan.addEventListener('click', function (e) { if (e.target.closest('.go')) return; buzz(10); if (planAction) planAction(); });
   pGo.addEventListener('click', function () { buzz(15); if (planAction) planAction(); });
   // The empty day: plush Mimi and one clear button instead of a wall of tips.
   function paintEmpty() {

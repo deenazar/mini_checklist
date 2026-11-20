@@ -53,7 +53,18 @@
     o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + 0.03);
   }
   var sfx = {
-    meow: function () { tone(680, 0.14, 'sine', 0.09, 0, 1080); tone(1020, 0.3, 'sine', 0.08, 0.13, 520); },
+    meow: function () {
+      var a = A(); if (!a) return;
+      var t = a.currentTime + 0.01, d = 0.62 + Math.random() * 0.18, p = 0.9 + Math.random() * 0.25;
+      var o = a.createOscillator(), vib = a.createOscillator(), vg = a.createGain(), g = a.createGain(), f1 = a.createBiquadFilter(), f2 = a.createBiquadFilter(), mix = a.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(480 * p, t); o.frequency.linearRampToValueAtTime(760 * p, t + d * 0.35); o.frequency.exponentialRampToValueAtTime(420 * p, t + d);
+      vib.frequency.value = 6; vg.gain.value = 9; vib.connect(vg).connect(o.frequency);
+      f1.type = 'bandpass'; f1.Q.value = 5; f1.frequency.setValueAtTime(700, t); f1.frequency.linearRampToValueAtTime(1250, t + d * 0.4); f1.frequency.linearRampToValueAtTime(650, t + d);
+      f2.type = 'bandpass'; f2.Q.value = 7; f2.frequency.setValueAtTime(1700, t); f2.frequency.linearRampToValueAtTime(2500, t + d * 0.4); f2.frequency.linearRampToValueAtTime(1300, t + d);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t + 0.06); g.gain.setValueAtTime(0.3, t + d * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(f1); o.connect(f2); f1.connect(mix); f2.connect(mix); mix.gain.value = 1.4; mix.connect(g).connect(a.destination);
+      o.start(t); vib.start(t); o.stop(t + d + 0.05); vib.stop(t + d + 0.05);
+    },
     giggle: function () { [0, 0.09, 0.18, 0.27].forEach(function (d, i) { tone(900 + i * 140, 0.08, 'triangle', 0.06, d, 1300 + i * 140); }); },
     laugh: function () { [0, 0.11, 0.22, 0.33, 0.44].forEach(function (d, i) { tone(760 + (i % 2) * 220, 0.09, 'sawtooth', 0.025, d, 980 + (i % 2) * 260); }); },
     grump: function () { tone(220, 0.35, 'sawtooth', 0.03, 0, 140); },
@@ -510,6 +521,8 @@
     touch.setAttribute('aria-label', 'Mimi. Tap her head, belly, ears or tail, or stroke her.');
     touch.addEventListener('pointerdown', function (e) { touch.setPointerCapture && touch.setPointerCapture(e.pointerId); onDown(e); });
     touch.addEventListener('pointermove', onMove);
+    // 3D Mimi looks at your finger
+    touch.addEventListener('pointermove', function (e) { if (!m3) return; var r = figure.getBoundingClientRect(); m3.look(((e.clientX - r.left) / r.width - 0.5) * 2, ((e.clientY - r.top) / r.height - 0.5) * 2); });
     touch.addEventListener('pointerup', onUp);
     touch.addEventListener('pointercancel', function () { drag = null; if (petting) { petting = false; purr(false); mimiEl.classList.remove('is-happy', 'is-purr'); } });
     touch.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); var c = center(0.5, 0.35); onTap('head', c.x, c.y); } });
@@ -540,7 +553,8 @@
 
     var tools = el('nav', 'rm-tools');
     tools.setAttribute('aria-label', 'Play');
-    [['🐟', 'Feed', feed], ['🧶', 'Yarn', yarn], ['💃', 'Dance', dance], ['💬', 'My day', myDay], ['🙂', 'Me as Mimi', meOpen]].forEach(function (t, i) {
+    // "Me as Mimi" is paused for now (meOpen stays for later).
+    [['🐟', 'Feed', feed], ['🧶', 'Yarn', yarn], ['💃', 'Dance', dance], ['💬', 'My day', myDay]].forEach(function (t, i) {
       var b = el('button', 'rm-tool', '<span class="ic">' + t[0] + '</span><span>' + t[1] + '</span>');
       b.type = 'button';
       b.style.setProperty('--d', (0.15 + i * 0.05) + 's');
@@ -553,11 +567,25 @@
     paintMeter(false);
   }
 
+  // 3D Mimi (three.js), loaded when the room opens; the drawn Mimi stays if 3D can't run.
+  var m3 = null;
+  function start3D() {
+    if (!window.Mimi3D) return;
+    window.Mimi3D.load().then(function () {
+      if (!root || m3) return;
+      try {
+        m3 = window.Mimi3D.create(figure, mimiEl);
+        mimiEl.classList.add('is-3d');
+      } catch (e) { m3 = null; mimiEl.classList.remove('is-3d'); }
+    }).catch(function () {});
+  }
+
   var opener = null;
   function open(fromEl) {
     if (root) return;
     happy = loadHappy();
     build();
+    start3D();
     opener = document.activeElement;
     // Zoom out of the header's Mimi.
     if (fromEl && fromEl.getBoundingClientRect && !reduce) {
@@ -572,6 +600,7 @@
     if (!root) return;
     meClose();
     purr(false);
+    if (m3) { try { m3.destroy(); } catch (e) {} m3 = null; }
     document.removeEventListener('keydown', onKey);
     var r = root;
     root = null;
@@ -582,7 +611,7 @@
   }
   function onKey(e) { if (e.key === 'Escape') { if (mePanel) meClose(); else close(); } }
 
-  window.MimiArt.onChange && window.MimiArt.onChange(function () { if (figure && root) figure.innerHTML = window.MimiArt.cat('room'); });
+  window.MimiArt.onChange && window.MimiArt.onChange(function () { if (figure && root && !m3) figure.innerHTML = window.MimiArt.cat('room'); });
   var roomBtn = document.getElementById('roomBtn');
   if (roomBtn) roomBtn.addEventListener('click', function () { open(roomBtn); });
 

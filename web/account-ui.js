@@ -67,7 +67,6 @@
         function () { N.account('signIn'); });
       return;
     }
-    var who = s.email || s.name || 'your Google account';
     var state = {
       ok: 'Synced ' + ago(s.lastSync),
       syncing: s.message || 'Syncing…',
@@ -75,10 +74,11 @@
       error: s.message || 'Sync stopped',
       off: s.message || 'Off'
     }[s.phase] || '';
-    var top = row('Signed in as ' + who, state, null, 'acct');
-    if (s.phase === 'error') top.classList.add('warn');
-    if (s.phase === 'locked') row('Enter sync password', 'Unlocks your synced checklist on this iPhone.', function () { N.account('unlock'); });
-    else row('Sync now', 'Changes also sync on their own.', function () { N.account('syncNow'); });
+    // No "Signed in as …" line here: the name and photo are already on your profile. Just the sync state and actions.
+    var main;
+    if (s.phase === 'locked') main = row('Enter sync password', state + ' · unlocks your synced checklist on this iPhone.', function () { N.account('unlock'); });
+    else main = row('Sync now', state + (s.phase === 'ok' ? ' · changes also sync on their own.' : ''), function () { N.account('syncNow'); });
+    if (s.phase === 'error') main.classList.add('warn');
     row('Sign out', 'Your checklist stays on this iPhone.', function () {
       if (confirm('Sign out of Google?\n\nSync stops. Everything stays on this iPhone.')) N.account('signOut');
     }, 'danger');

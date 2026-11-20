@@ -4,6 +4,28 @@ Your daily checklist with Mimi as a real iPhone app: full screen, works offline,
 “Hey Mimi”), reminders ring as notifications, the running task timer lives in the **Dynamic Island** and on the
 **Lock Screen**, and your checklist can sync, **encrypted**, through your Google account.
 
+## What’s new in version 4.4
+
+- **3D Mimi in her room** (three.js, bundled, loaded only when the room opens): a soft plush cat with shading, glossy eyes and a soft shadow. She breathes, blinks, sways her tail, slowly turns, looks at your finger, and acts out every reaction in 3D (happy eyes, jump, dance, spin, dizzy, ear twitches, purring). If 3D can’t run, the drawn Mimi is used.
+- **Me as Mimi** is hidden from the room for now (it can come back later).
+- **Hours available per day** (Settings › Planning) is now a hard limit: you can’t add, edit or move a task if its planned time would go past it. Times that won’t fit are greyed out in the picker, and Mimi says how much time is left.
+- **Finished tasks** can’t be edited or moved to another day (untick first).
+- **List order**: priority, then the start (reminder) time, then older carried-over tasks, then the order you added them.
+- **Mimi meows** when the app opens, when you come back after a while, and now and then when you finish a task. Her meow sounds more like a real cat.
+- **Insights** redesigned: a summary card with a progress ring and Mimi’s mood, colourful stat tiles, lavender and mint bar charts that grow in, today’s bar in sunset orange, and a lavender Day/Week/Month switch.
+
+## What’s new in version 4.3
+
+- **Up next bar**: today’s plan moved out of the list into a small bar just above the bottom bar, like a music app’s mini player. It shows the next task with a ▶ to start it (and open the focus screen), the running task with its time left, or “All done 🎉” to see your day.
+- **Mimi shrinks and grows as you scroll** the task list, instead of fading away. The week chart and stats fade, the date stays.
+- **Finished tasks** have no “…” menu at all. Tap the tick to undo, swipe left to delete.
+- **Drag the card**: grab the little handle at the top of the task card and drag it up (Mimi shrinks, more room for tasks) or down (Mimi grows back). A tap on the handle switches between the two.
+- **Tab bar** now sits flush on the bottom edge, like a normal iPhone tab bar.
+- **More room for tasks**: a shorter header, and the All / list filter only shows when there’s more than one list. On small iPhones the panel is tighter, and the app opens with Mimi small when the list would otherwise be hidden.
+- Edit and Water sheets use the lavender buttons too.
+- **Settings › Account & sync** no longer shows “Signed in as …”. It shows just the sync state, Sync now and Sign out.
+- Fixed: the empty water glass sat too low in the water card.
+
 ## What’s new in version 4.2
 
 - **Water glass**: the water card and the water sheet show a glass that fills up as you drink. The water has moving waves and little bubbles. Each drink drops in, sloshes the water and bounces the glass, and the glass glows mint when you reach your goal.

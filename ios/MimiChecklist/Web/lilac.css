@@ -412,7 +412,7 @@ html.mw-rest .lplan .pbar i::after{animation-play-state:paused}
 .gl-bub{fill:#fff;opacity:0;animation:glBub 2.8s ease-in infinite}
 .gl-bub:nth-of-type(2){animation-delay:.9s}.gl-bub:nth-of-type(3){animation-delay:1.8s}
 @keyframes glBub{0%{opacity:0;transform:translateY(0)}20%{opacity:.85}100%{opacity:0;transform:translateY(-34px)}}
-.empty .gl-bub,.has-glass.empty .gl-bub{display:none}
+.has-glass.gl-empty .gl-bub{display:none}
 /* A drink: a drop falls in, the water sloshes, and the glass bounces */
 .gl-drop{fill:#4DA6FF;opacity:0}
 .glug .gl-drop{animation:glDrop .55s cubic-bezier(.5,0,.8,.6)}
@@ -424,10 +424,131 @@ html.mw-rest .lplan .pbar i::after{animation-play-state:paused}
 .glug .lglass{animation:glBounce .7s cubic-bezier(.2,1.5,.4,1) .45s}
 @keyframes glBounce{40%{transform:scale(1.08,.94)}70%{transform:scale(.97,1.03)}}
 /* Goal reached: the glass glows mint and twinkles */
-.has-glass.full .gl-rim{stroke:var(--mint-hi)}
-.has-glass.full .lglass{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--mint-hi) 70%,transparent))}
+.has-glass.gl-full .gl-rim{stroke:var(--mint-hi)}
+.has-glass.gl-full .lglass{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--mint-hi) 70%,transparent))}
 @media (prefers-reduced-motion:reduce){ .gl-wave,.gl-bub,.glug *{animation:none!important} .gl-water{transition:none} }
 html.mw-rest .lglass *,html.mw-hidden .lglass *{animation-play-state:paused!important}
 .wring.has-glass .lglass{transform:none}
 .wstrip .wdrop.has-glass svg.lglass{width:36px;height:46px}
 .wstrip .wdrop.has-glass{width:42px;height:48px;display:grid;place-items:center}
+
+/* ---------- 4.3 ---------- */
+/* Finished tasks: no "…" menu (tap the tick to undo, swipe left to delete) */
+.task.done .more{display:none}
+
+/* "Up next" bar above the bottom bar */
+.lmini{position:fixed;z-index:16;left:max(18px,env(safe-area-inset-left,0px));right:max(18px,env(safe-area-inset-right,0px));max-width:500px;margin:0 auto;
+  bottom:calc(88px + env(safe-area-inset-bottom,0px));height:60px;border-radius:20px;display:flex;align-items:center;gap:10px;padding:0 8px 0 6px;overflow:hidden;cursor:pointer;
+  background:color-mix(in srgb,var(--ink) 92%,transparent);color:var(--panel);box-shadow:0 14px 30px -14px rgba(10,6,30,.6);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);animation:lmIn .5s var(--spring) both;transition:transform .35s var(--spring),opacity .25s}
+@keyframes lmIn{from{transform:translateY(30px) scale(.96);opacity:0}}
+.lmini.run{background:linear-gradient(120deg,#9D84FF,#7C5CF0);color:#fff}
+.lmini.all{background:linear-gradient(120deg,#7FE3B8,#4CCB93);color:#0E2A1E}
+.lm-av{flex:none;width:46px;height:46px;border-radius:15px;background:rgba(255,255,255,.12);display:grid;place-items:center;overflow:hidden}
+.lm-av .mw-cat{width:44px;height:auto;margin-top:6px}
+.lmini.run .lm-av .mw-body{animation:mwBreath 2.2s ease-in-out infinite}
+.lm-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.lm-tx .cap{font:600 10px var(--body);letter-spacing:.1em;text-transform:uppercase;opacity:.7}
+.lm-t{font:500 15px/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lm-p{font:500 12px var(--body);opacity:.8;font-variant-numeric:tabular-nums}
+.lm-p:empty{display:none}
+.lmini .go{flex:none;width:42px;height:42px;border:0;border-radius:14px;padding:0;display:grid;place-items:center;background:var(--lav);color:var(--lav-ink);transition:transform .2s var(--spring)}
+.lmini.run .go,.lmini.all .go{background:rgba(255,255,255,.9);color:#17112E}
+.lmini .go:active{transform:scale(.9)}
+.lmini .go svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.lmini .pbar{position:absolute;left:14px;right:14px;bottom:4px;height:3px;border-radius:2px;background:rgba(255,255,255,.15);overflow:hidden}
+.lmini .pbar i{display:block;height:100%;width:0;border-radius:2px;background:var(--lav);transition:width .9s var(--spring)}
+.lmini.run .pbar i,.lmini.all .pbar i{background:#fff}
+.lmini.bump{animation:lmBump .5s var(--spring)}
+@keyframes lmBump{40%{transform:scale(1.03)}}
+html.kb .lmini,html.sheet-open .lmini{transform:translateY(200%);opacity:0;pointer-events:none}
+html.has-mini .scroll{padding-bottom:calc(172px + env(safe-area-inset-bottom,0px))}
+html.has-mini .toast{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
+.lplan{display:none!important}
+@media (prefers-reduced-motion:reduce){ .lmini,.lmini.bump{animation:none} }
+
+/* Scrolling the list: Mimi shrinks (and grows back) instead of fading away; the week chart and stats fade */
+.stage.mw .mw-scene{opacity:1;transform:none;bottom:calc(74px - var(--cp,0) * 44px)}
+.stage.mw .mw-week{opacity:calc(1 - var(--cp,0) * 1.8);transition:none}
+.stage.mw .hud.bot{opacity:calc(1 - var(--cp,0) * 2.2)}
+.stage.mw.shrunk .hud.bot,.stage.mw.shrunk .mw-week{pointer-events:none}
+.stage.mw.shrunk .mw-mimi{pointer-events:auto}
+
+/* ---------- 4.3: docked tab bar, draggable panel handle ---------- */
+/* The tab bar sits flush on the bottom edge, like a normal iPhone tab bar */
+.lnav{left:0;right:0;bottom:0;max-width:none;margin:0;height:calc(64px + env(safe-area-inset-bottom,0px));padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));
+  border-radius:22px 22px 0 0;border-width:1px 0 0;box-shadow:0 -10px 28px -18px rgba(10,6,30,.45);align-items:center}
+.lnav .ti{width:34px;height:34px;border-radius:11px}
+.lnav .ti svg{width:18px;height:18px}
+.lmini{bottom:calc(74px + env(safe-area-inset-bottom,0px))}
+.scroll{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+html.has-mini .scroll{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+html.has-mini .toast{bottom:calc(144px + env(safe-area-inset-bottom,0px))}
+.fab{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+/* The panel's handle: bigger to grab, drag the card up or down, or tap it */
+.panel > .pin > .handle{position:relative;width:46px;height:5px;background:color-mix(in srgb,var(--sec) 45%,transparent);touch-action:none;cursor:grab;transition:width .2s,background .2s}
+.panel > .pin > .handle::before{content:"";position:absolute;left:-160px;right:-160px;top:-14px;bottom:-12px}
+.panel > .pin > .handle:active{width:60px;background:var(--lav)}
+/* A shorter header so the list gets room (Mimi still has plenty of space) */
+.stage{height:clamp(250px,34vh,320px)}
+@media (max-height:700px){ .stage.mw{height:calc(clamp(220px,33vh,280px) + var(--safe-top))} }
+/* Filters only when there is more than one list to pick from */
+.filters.lc-one{display:none}
+/* Short screens (iPhone SE): tighter panel so the list shows */
+@media (max-height:700px){
+  .pin{gap:8px}
+  .dchip{min-height:44px;padding:4px 0}
+  .wstrip{padding:5px 7px 5px 8px}
+  .wstrip .wdrop.has-glass{width:34px;height:38px}
+  .wstrip .wdrop.has-glass svg.lglass{width:30px;height:38px}
+  .wq{height:36px}
+  .add>.atop input[type=text]{padding:7px 6px}
+  .add .aplus{width:36px;height:36px}
+  .alloc{display:none}
+  .lmini{height:52px}
+  .lm-av{width:40px;height:40px}
+  .stage.mw .hud.bot .chips{display:none}
+}
+/* Sheets: lavender actions to match the rest */
+.ebtns .save,.wbtn{background:linear-gradient(180deg,#B9A6FF,#9D84FF);color:#17112E;box-shadow:none}
+.linkbtn{color:var(--teal)}
+@media (max-height:700px){ .stage.mw .hud.bot{justify-content:flex-end} }
+
+/* ---------- Insights, redesigned ---------- */
+.isheet{max-height:90%}
+.seg3{border-radius:16px;padding:4px;background:var(--fill)}
+.seg3 button{height:36px;border-radius:12px;font:500 14px var(--display);transition:background .25s,color .25s,transform .2s var(--spring)}
+.seg3 button[aria-selected="true"]{background:linear-gradient(180deg,#B9A6FF,#9D84FF);color:#17112E;box-shadow:0 6px 14px -8px #7C5CF0}
+.seg3 button:active{transform:scale(.95)}
+.irange{font:500 12.5px var(--body);letter-spacing:.02em}
+.ihero{display:flex;align-items:center;gap:16px;padding:16px;border-radius:24px;color:#17112E;
+  background:linear-gradient(140deg,#D6CBFF 0%,#B9A6FF 55%,#A58CFF 100%);box-shadow:0 14px 30px -18px #7C5CF0;animation:lcIn .5s var(--spring) both}
+.iring{position:relative;flex:none;width:96px;height:96px}
+.iring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.iring circle{fill:none;stroke-width:9}
+.iring .t{stroke:rgba(23,17,46,.12)}
+.iring .f{stroke:#17112E;stroke-linecap:round;transition:stroke-dashoffset 1.2s var(--spring) .15s}
+.iring b{position:absolute;inset:0;display:grid;place-items:center;font:500 22px var(--display);padding-bottom:10px}
+.iring span{position:absolute;left:0;right:0;bottom:20px;text-align:center;font-size:15px;animation:mwFloat 2.6s ease-in-out infinite}
+.itx{display:flex;flex-direction:column;gap:4px;min-width:0}
+.itx strong{font:500 20px/1.15 var(--display)}
+.itx small{font:500 13px/1.4 var(--body);color:#3A2C78}
+.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kpi{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:18px;animation:lcIn .5s var(--spring) both;animation-delay:var(--d,0s)}
+.kpi>i{flex:none;width:36px;height:36px;border-radius:12px;display:grid;place-items:center}
+.kpi>i svg{width:18px;height:18px;fill:none;stroke:#17112E;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.kpi>div{min-width:0}
+.kpi b{font:500 18px/1.15 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi span{font:500 10.5px var(--body);letter-spacing:.06em}
+.cbox{border-radius:20px;padding:14px 14px 10px;animation:lcIn .55s var(--spring) .1s both}
+.cbox h4{font:500 15px var(--display)}
+.cbox .tip{font:500 12.5px var(--body)}
+.cbox svg text{font:500 10px var(--body)}
+.cbox svg .grid{stroke-dasharray:3 4}
+.cbox svg .mk{transform-box:fill-box;transform-origin:50% 100%;animation:ibGrow .7s var(--spring) both;animation-delay:var(--d,0s)}
+.cbox svg .mk.on{opacity:1;filter:brightness(1.12) drop-shadow(0 4px 6px rgba(124,92,240,.35))}
+.cbox svg .hb{transform-box:fill-box;transform-origin:0 50%;animation:ibGrowX .7s var(--spring) both;animation-delay:var(--d,0s)}
+@keyframes ibGrow{from{transform:scaleY(0)}}
+@keyframes ibGrowX{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){ .ihero,.kpi,.cbox,.cbox svg .mk,.cbox svg .hb,.iring span{animation:none} }
