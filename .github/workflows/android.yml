@@ -1,0 +1,31 @@
+# Builds the Android app (android/) on GitHub's free runners and attaches the APK to the run,
+# so no Android Studio is needed: Actions tab › "Android APK" › latest run › Artifacts › mimi-checklist-apk.
+name: Android APK
+
+on:
+  push:
+    paths: ['android/**', 'web/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build the APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mimi-checklist-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

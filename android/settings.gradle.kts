@@ -1,0 +1,19 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        // Google's copy of Maven Central, in case the main one can't be reached from a build machine.
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
+    }
+}
+rootProject.name = "MimiChecklist"
+include(":app")
