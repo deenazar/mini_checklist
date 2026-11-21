@@ -552,3 +552,5 @@ html.has-mini .toast{bottom:calc(144px + env(safe-area-inset-bottom,0px))}
 @keyframes ibGrow{from{transform:scaleY(0)}}
 @keyframes ibGrowX{from{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){ .ihero,.kpi,.cbox,.cbox svg .mk,.cbox svg .hb,.iring span{animation:none} }
+/* Android: the real timer is a notification, so no in-page island pill */
+html.android .di{display:none!important}

@@ -155,7 +155,7 @@
     window.__mimiNotifStatus = function (state) {
       offRow.hidden = state !== 'off';
       planRow.querySelector('.ssub').textContent = state === 'off' && plan.on
-        ? 'On, but iPhone notifications are off for Mimi'
+        ? 'On, but phone notifications are off for Mimi'
         : 'A nudge every day to add your tasks';
     };
     if (window.mimiLocal) {

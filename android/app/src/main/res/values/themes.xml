@@ -1,0 +1,7 @@
+<resources>
+    <!-- No action bar; the page draws everything. Bars are coloured by MainActivity. -->
+    <style name="Theme.Mimi" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/mimi_panel</item>
+        <item name="android:colorAccent">@color/mimi_lavender</item>
+    </style>
+</resources>

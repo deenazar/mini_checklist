@@ -475,4 +475,17 @@
   window.addEventListener('mimi-all-done', function () { setTimeout(openDone, 1100); });
 
   window.mimiLilac = { focus: openFocus, done: openDone, closeFocus: closeFocus, closeDone: closeDone };
+
+  // Android back button: close whatever is on top (returns true if something was closed).
+  window.__mimiBack = function () {
+    if (dn) { closeDone(); return true; }
+    if (fx) { closeFocus(); return true; }
+    var soon = doc.querySelector('.soon'); if (soon) { var g = soon.querySelector('button'); if (g) { g.click(); return true; } }
+    var me = doc.querySelector('.rm-me .rm-mbtn.x'); if (me) { me.click(); return true; }
+    var room = doc.querySelector('.room .rm-x'); if (room && window.mimiRoom) { window.mimiRoom.close(); return true; }
+    var sheets = doc.querySelectorAll('.sheet.open'), top = sheets[sheets.length - 1];
+    if (top) { var b = top.querySelector('.shead .sbtn'); if (b) { b.click(); return true; } }
+    var ae = doc.activeElement; if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) { ae.blur(); return true; }
+    return false;
+  };
 })();
